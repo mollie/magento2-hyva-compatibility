@@ -1,0 +1,54 @@
+<?php
+/*
+ * Copyright Magmodules.eu. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+
+/** @var \Mollie\Subscriptions\Block\Frontend\Product\View\SubscriptionOptions $block */
+/** @var \Magento\Framework\Escaper $escaper */
+
+/** @var ViewModelRegistry $viewModels */
+
+/** @var HeroiconsOutline $heroicons */
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+?>
+<div class="mollie-subscription-options flex flex-wrap gap-2">
+    <input type="hidden" id="mollie_subscription_purchase" name="purchase" value="subscription" form="product_addtocart_form" />
+    <input type="hidden" id="mollie_subscription_option" name="recurring_metadata[option_id]" form="product_addtocart_form" />
+
+    <?php if ($block->allowOneTimePurchase()): ?>
+        <button
+            onclick="
+                document.getElementById('mollie_subscription_option').value = 'onetimepurchase';
+                document.getElementById('mollie_subscription_purchase').value = 'onetime';
+            "
+            type="submit"
+            class="action primary tocart product-addtocart-button select-subscription"
+            value="onetimepurchase"
+            title="<?= __('One Time Purchase') ?>"
+            form="product_addtocart_form"
+        ><?= __('One Time Purchase'); ?></button>
+    <?php endif; ?>
+
+    <?php foreach ($block->getOptions() as $option): ?>
+        <button
+            onclick="document.getElementById('mollie_subscription_option').value = '<?= $escaper->escapeJs($option->getIdentifier()); ?>'"
+            type="submit"
+            class="action btn btn-primary tocart product-addtocart-button select-subscription"
+            value="<?= $escaper->escapeHtmlAttr($option->getIdentifier()); ?>"
+            title="<?= $escaper->escapeHtmlAttr($option->getTitle()) ?>"
+            form="product_addtocart_form"
+        >
+            <?= $heroicons->shoppingCartHtml('border-current inline'); ?>
+            <span class="block whitespace-nowrap">
+                <?= $escaper->escapeHtml($option->getTitle()); ?>
+            </span>
+        </button>
+    <?php endforeach; ?>
+
+    <?php /** Instant purchase should be hidden when subscriptions are active */ ?>
+    <style>#instant-purchase {display: none;}</style>
+</div>
