@@ -1,0 +1,147 @@
+<?php
+/*
+ * Copyright Magmodules.eu. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsOutline;
+
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var \Mollie\Subscriptions\Block\Frontend\Customer\Account\ActiveSubscriptions $block */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var HeroiconsOutline $heroicons */
+$heroicons = $viewModels->require(HeroiconsOutline::class);
+
+$subscriptions = $block->getSubscriptions();
+?>
+
+<?php if (!$subscriptions): ?>
+    <div class="message info empty">
+        <span>
+            <?= $escaper->escapeHtml(__('You have no active subscriptions.')) ?>
+        </span>
+    </div>
+<?php else: ?>
+    <div class="card grid grid-cols-3 lg:grid-cols-6 mb-4">
+        <div class="text-sm text-secondary p-2"><?= $block->escapeHtml(__('ID')) ?></div>
+        <div class="text-sm text-secondary p-2"><?= $block->escapeHtml(__('Date')) ?></div>
+        <div class="text-sm text-secondary p-2"><?= $block->escapeHtml(__('Status')) ?></div>
+        <div class="text-sm text-secondary p-2"><?= $block->escapeHtml(__('Description')) ?></div>
+        <div class="text-sm text-secondary p-2"><?= $block->escapeHtml(__('Amount')) ?></div>
+        <div class="text-sm text-secondary p-2 text-center"><?= $block->escapeHtml(__('Action')) ?></div>
+
+        <?php $i = 0; ?>
+        <?php foreach ($subscriptions as $subscription): ?>
+            <?php $i++; ?>
+            <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
+                <?= $block->escapeHtml($subscription->getId()) ?>
+            </div>
+            <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
+                <?= /* @noEscape */ $block->formatDate($subscription->getCreatedAt()) ?>
+            </div>
+            <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
+                <?= $subscription->getStatus() ?>
+            </div>
+            <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
+                <?= $subscription->getDescription() ?>
+            </div>
+            <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
+                <?= /* @noEscape */ $block->formatPrice($subscription->getAmount()) ?>
+            </div>
+            <div class="p-2 flex items-center justify-evenly<?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
+                <?php if (!$block->hasParent($subscription->getId())): ?>
+                    <?php if ($subscription->getStatus() == 'active'): ?>
+                        <?php $formData = json_decode(
+                            $this->helper(\Magento\Framework\Data\Helper\PostHelper::class)->getPostData(
+                                $block->getUrl(
+                                    'mollie_subscriptions/index/cancel',
+                                    ['subscription_id' => $subscription->getId()]
+                                ),
+                            ),
+                            true
+                        ); ?>
+
+                        <form action="<?= /* @noEscape */ $formData['action'] ?>" method="post"
+                              class="inline-flex items-center">
+                            <?= $block->getBlockHtml('formkey'); ?>
+
+                            <input type="hidden" name="data"
+                                   value="<?= $escaper->escapeHtmlAttr(json_encode($formData['data'])) ?>"
+                            />
+
+                            <button type="submit"
+                                class="inline-block text-sm underline text-secondary-darker"
+                               title="<?= $escaper->escapeHtmlAttr(__('Cancel')); ?>"
+                            >
+                                <span><?= $heroicons->xHtml() ?></span>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+
+                    <?php if ($subscription->getStatus() == 'canceled'): ?>
+                        <?php $formData = json_decode(
+                            $this->helper(\Magento\Framework\Data\Helper\PostHelper::class)->getPostData(
+                                $block->getUrl(
+                                    'mollie_subscriptions/index/restart',
+                                    ['subscription_id' => $subscription->getId()]
+                                )
+                            ),
+                            true
+                        ); ?>
+                        <form action="<?= /* @noEscape */ $formData['action'] ?>" method="post"
+                              class="inline-flex items-center">
+                            <?= $block->getBlockHtml('formkey'); ?>
+                            <input type="hidden" name="data"
+                                   value="<?= $escaper->escapeHtmlAttr(json_encode($formData['data'])) ?>"
+                            />
+
+                            <button type="submit"
+                                    class="inline-block text-sm underline text-secondary-darker"
+                                    title="<?= $escaper->escapeHtmlAttr(__('Restart')); ?>"
+                            >
+                                <span><?= $heroicons->refreshHtml() ?></span>
+                            </a>
+                        </form>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+        <!--<table class="data table table-order-items history w-full" id="my-orders-table">
+            <?php foreach ($subscriptions as $subscription): ?>
+                <tr>
+                    <td data-th="<?= $block->escapeHtml(__('ID')) ?>" class="col id"><?= $block->escapeHtml($subscription->getId()) ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Date')) ?>" class="col date"><?= /* @noEscape */ $block->formatDate($subscription->getCreatedAt()) ?></td>
+                    <?php $extra = $block->getChildBlock('extra.container'); ?>
+                    <?php if ($extra) : ?>
+                        <?php $extra->setSubscription($subscription); ?>
+                        <?= $extra->getChildHtml() ?>
+                    <?php endif; ?>
+                    <td data-th="<?= $block->escapeHtml(__('Status')) ?>" class="col"><?= $subscription->getStatus() ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Description')) ?>" class="col"><?= $subscription->getDescription() ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Total')) ?>" class="col total"><?= /* @noEscape */ $block->formatPrice($subscription->getAmount()) ?></td>
+                    <?php /**
+                    <td data-th="<?= $block->escapeHtml(__('Status')) ?>" class="col status"><?= $block->escapeHtml($_order->getStatusLabel()) ?></td>
+                     */ ?>
+                    <td data-th="<?= $block->escapeHtml(__('Actions')) ?>" class="col actions">
+                        <?php if (!$block->hasParent($subscription->getId())): ?>
+                            <?php if ($subscription->getStatus() == 'active'): ?>
+                                <a href="#" data-post='{"action": "<?=$block->getUrl('mollie_subscriptions/index/cancel'); ?>", "data": {"subscription_id": "<?=$subscription->getId(); ?>", "confirmation": true, "confirmationMessage": "<?=__('Are you sure you want to delete the subscription with ID %1?', $subscription->getId()); ?>"}}' class="action delete">
+                                    <span><?= $block->escapeHtml(__('Cancel')); ?></span>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php if ($subscription->getStatus() == 'canceled'): ?>
+                                <a href="#" data-post='{"action": "<?=$block->getUrl('mollie_subscriptions/index/restart'); ?>", "data": {"subscription_id": "<?=$subscription->getId(); ?>"}}' class="action">
+                                    <span><?= $block->escapeHtml(__('Restart')); ?></span>
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>-->
+    </div>
+<?php endif; ?>
