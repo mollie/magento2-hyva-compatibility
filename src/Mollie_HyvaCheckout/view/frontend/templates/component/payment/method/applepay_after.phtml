@@ -1,0 +1,12 @@
+<?php
+/*
+ *  Copyright Magmodules.eu. All rights reserved.
+ *  See COPYING.txt for license details.
+ */
+?>
+<script>
+    if (!window.ApplePaySession || !window.ApplePaySession.canMakePayments()) {
+        document.getElementById('payment-method-option-mollie_methods_applepay').style.display = 'none';
+    }
+</script>
+
