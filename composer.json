@@ -9,10 +9,12 @@
   },
   "autoload": {
     "files": [
-      "registration.php"
+        "src/Mollie_HyvaCompatibility/registration.php",
+        "src/Mollie_HyvaCheckout/registration.php"
     ],
     "psr-4": {
-      "Mollie\\HyvaCompatibility\\": ""
+      "Mollie\\HyvaCompatibility\\": "src/Mollie_HyvaCompatibility",
+      "Mollie\\HyvaCheckout\\": "src/Mollie_HyvaCheckout"
     }
   }
 }
