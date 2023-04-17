@@ -6,7 +6,10 @@
 ?>
 <script>
     if (!window.ApplePaySession || !window.ApplePaySession.canMakePayments()) {
-        document.getElementById('payment-method-option-mollie_methods_applepay').style.display = 'none';
+        const applePayElement = document.getElementById('payment-method-option-mollie_methods_applepay');
+        if (applePayElement) {
+            applePayElement.style.display = 'none';
+        }
     }
 </script>
 
