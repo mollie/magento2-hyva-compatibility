@@ -6,11 +6,11 @@
             <argument name="compatModules" xsi:type="array">
                 <item name="hyva-magento2-mollie" xsi:type="array">
                     <item name="original_module" xsi:type="string">Mollie_Payment</item>
-                    <item name="compat_module" xsi:type="string">Mollie_PaymentHyvaCompatibility</item>
+                    <item name="compat_module" xsi:type="string">Mollie_HyvaCompatibility</item>
                 </item>
                 <item name="hyva-magento2-mollie-subscriptions" xsi:type="array">
                     <item name="original_module" xsi:type="string">Mollie_Subscriptions</item>
-                    <item name="compat_module" xsi:type="string">Mollie_PaymentHyvaCompatibility</item>
+                    <item name="compat_module" xsi:type="string">Mollie_HyvaCompatibility</item>
                 </item>
             </argument>
         </arguments>
