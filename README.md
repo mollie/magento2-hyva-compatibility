@@ -50,9 +50,50 @@ bin/magento setup:upgrade
 php bin/magento hyva:config:generate
 ```
 
-5. Generate the CSS files:
+5. When having a custom theme add this line to your `tailwind.config.js` in the `purge.content` section:
+
+```js
+purge: {
+    content: [
+        // ...
+        '../../../../../../../vendor/mollie/**/*.phtml',
+    ]
+}
+```
+
+6. Generate the CSS files:
 
 ```bash
 npm --prefix vendor/hyva-themes/magento2-default-theme/web/tailwind/ run ci
 npm --prefix vendor/hyva-themes/magento2-default-theme/web/tailwind/ run build-prod
+```
+
+Or from your theme:
+
+```bash
+npm --prefix app/design/frontend/<Vendor>/<Theme>/web/tailwind run ci
+npm --prefix app/design/frontend/<Vendor>/<Theme>/web/tailwind run build-prod
+```
+
+## Missing styles?
+
+Make sure that PostCSS uses the `postcssImportHyvaModules` plugin in your theme:
+
+1. Go to your theme folder: `app/design/frontend/<Vendor>/<Theme>/web/tailwind`
+2. Install the module:
+```bash
+npm install --save-dev @hyva-themes/hyva-modules
+```
+3. Open your `postcss.config.js` and add this as the first line:
+```js
+const { postcssImportHyvaModules } = require("@hyva-themes/hyva-modules");
+```
+4. Make sure the plugin is includes in the plugins list:
+```js
+module.exports = {
+    plugins: [
+        postcssImportHyvaModules,
+        // ...
+    ],
+};
 ```
