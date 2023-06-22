@@ -10,11 +10,12 @@ Mollie requires no minimum costs, no fixed contracts, no hidden costs. At Mollie
 
 ## About this repository
 
-This repository holds 2 modules:
-- `Mollie_HyvaCompatibility`: This module adds compatibility for the Mollie module with Hyvä.
-- `Mollie_HyvaCheckout`: This module adds support for the Hyvä Checkout module.
+This repository hold the module to add support for Mollie to Hyvä. This module has a dependency on the Mollie Magento 2 module.
 
-If you are using the Hyvä React Checkout module, we have a separate repository for that:
+If you are using the **Hyvä Checkout** module, we have a separate repository for that:
+https://github.com/mollie/magento2-hyva-checkout
+
+If you are using the **Hyvä React Checkout** module, we have a separate repository for that:
 https://github.com/mollie/magento2-hyva-react-checkout
 
 ## Installation
@@ -25,17 +26,10 @@ https://github.com/mollie/magento2-hyva-react-checkout
 composer require mollie/magento2-hyva-compatibility
 ```
 
-2. Enable both modules:
+2. Enable the module:
 
 ```bash
 bin/magento module:enable Mollie_HyvaCompatibility
-bin/magento module:enable Mollie_HyvaCheckout
-```
-
-If you don't have the Hyvä Checkout module installed, you need to disable the module instead:
-
-```bash
-bin/magento module:disable Mollie_HyvaCheckout
 ```
 
 3. Upgrade the database:
@@ -50,18 +44,7 @@ bin/magento setup:upgrade
 php bin/magento hyva:config:generate
 ```
 
-5. When having a custom theme add this line to your `tailwind.config.js` in the `purge.content` section:
-
-```js
-purge: {
-    content: [
-        // ...
-        '../../../../../../../vendor/mollie/**/*.phtml',
-    ]
-}
-```
-
-6. Generate the CSS files:
+5. Generate the CSS files:
 
 ```bash
 npm --prefix vendor/hyva-themes/magento2-default-theme/web/tailwind/ run ci
