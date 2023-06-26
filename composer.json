@@ -13,7 +13,7 @@
   },
   "autoload": {
     "files": [
-        "src/Mollie_HyvaCompatibility/registration.php",
+        "src/Mollie_HyvaCompatibility/registration.php"
     ],
     "psr-4": {
       "Mollie\\HyvaCompatibility\\": "src/Mollie_HyvaCompatibility"
