@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://info.mollie.com/hubfs/github/magento-2/logo.png" width="128" height="128"/>
 </p>
-<h1 align="center">General Hyvä Compatibility + Hyvä Checkout support for Mollie</h1>
+<h1 align="center">General Hyvä Compatibility for Mollie</h1>
 
 ## About Mollie Payments
 With Mollie, you can accept payments and donations online and expand your customer base internationally with support for all major payment methods through a single integration. No need to spend weeks on paperwork or security compliance procedures. No more lost conversions because you don’t support a shopper’s favourite payment method or because they don’t feel safe. We made our products and API expansive, intuitive, and safe for merchants, customers and developers alike.
