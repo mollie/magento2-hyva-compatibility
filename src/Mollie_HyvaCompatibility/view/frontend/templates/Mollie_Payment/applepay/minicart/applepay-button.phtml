@@ -16,7 +16,7 @@ use Magento\Framework\Escaper;
         const request = {
             countryCode: "<?= $escaper->escapeJs($block->getStoreCountry()); ?>",
             currencyCode: "<?= $escaper->escapeJs($block->getStoreCurrency()); ?>",
-            supportedNetworks: ['amex', 'maestro', 'masterCard', 'visa', 'vPay'],
+            supportedNetworks: <?= json_encode($block->getSupportedNetworks()); ?>,
             merchantCapabilities: ['supports3DS'],
             total: {
                 label: "<?= $escaper->escapeJs($block->getStoreName()); ?>",
