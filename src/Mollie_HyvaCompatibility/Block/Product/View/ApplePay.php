@@ -11,6 +11,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\Template;
 use Mollie\Payment\Config;
+use Mollie\Payment\Service\Mollie\ApplePay\SupportedNetworks;
 
 class ApplePay extends \Mollie\Payment\Block\Product\View\ApplePay
 {
@@ -23,9 +24,10 @@ class ApplePay extends \Mollie\Payment\Block\Product\View\ApplePay
         Template\Context $context,
         Registry $registry,
         Config $config,
+        SupportedNetworks $supportedNetworks,
         array $data = []
     ) {
-        parent::__construct($context, $registry, $config, $data);
+        parent::__construct($context, $registry, $config, $supportedNetworks, $data);
 
         $this->registry = $registry;
     }

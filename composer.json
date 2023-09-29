@@ -9,7 +9,7 @@
   "require": {
     "magento/framework": "*",
     "hyva-themes/magento2-compat-module-fallback": "*",
-    "mollie/magento2": "*"
+    "mollie/magento2": ">=2.31.0"
   },
   "autoload": {
     "files": [

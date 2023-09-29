@@ -15,6 +15,7 @@ $product = $block->getProduct();
         let currencyCode = "<?= $block->escapeJs($block->getCurrencyCode()); ?>";
         let countryCode = "<?= $block->escapeJs($block->getCountryCode()); ?>";
         let storeName = "<?= $block->escapeJs($block->getStoreName()); ?>";
+        let supportedNetworks = <?= json_encode($block->getSupportedNetworks()); ?>;
 
         const getProductPrice = () => {
             return "<?= $block->getProductPrice() ?>";
@@ -25,7 +26,7 @@ $product = $block->getProduct();
         const request = {
             countryCode: countryCode,
             currencyCode: currencyCode,
-            supportedNetworks: ['amex', 'maestro', 'masterCard', 'visa', 'vPay'],
+            supportedNetworks: supportedNetworks,
             merchantCapabilities: ['supports3DS'],
             total: {
                 type: 'final',
