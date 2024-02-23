@@ -79,6 +79,15 @@ $product = $block->getProduct();
         }
 
         session.onvalidatemerchant = (event) => {
+            const form = document.getElementById('product_addtocart_form'),
+                  formData = new FormData(form),
+                  formDataObject = {};
+            formData.forEach((value, key) => {
+                formDataObject[key] = value;
+            });
+            formDataObject["product"] = <?= (int)$product->getId() ?>;
+            formDataObject["validationURL"] = event.validationURL;
+
             fetch(`${BASE_URL}mollie/applePay/buyNowValidation?form_key=${hyva.getFormKey()}`, {
                 method: 'POST',
                 headers: {
