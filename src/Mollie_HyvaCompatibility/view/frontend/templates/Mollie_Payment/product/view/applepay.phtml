@@ -17,6 +17,12 @@ $product = $block->getProduct();
         let storeName = "<?= $block->escapeJs($block->getStoreName()); ?>";
         let supportedNetworks = <?= json_encode($block->getSupportedNetworks()); ?>;
 
+        const form = document.getElementById('product_addtocart_form');
+
+        if (!form.reportValidity()) {
+            return;
+        }
+
         const getProductPrice = () => {
             return "<?= $block->getProductPrice() ?>";
         }
@@ -79,15 +85,20 @@ $product = $block->getProduct();
         }
 
         session.onvalidatemerchant = (event) => {
+            const formData = new FormData(form),
+                  formDataObject = {};
+            formData.forEach((value, key) => {
+                formDataObject[key] = value;
+            });
+            formDataObject["product"] = <?= (int)$product->getId() ?>;
+            formDataObject["validationURL"] = event.validationURL;
+
             fetch(`${BASE_URL}mollie/applePay/buyNowValidation?form_key=${hyva.getFormKey()}`, {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 },
-                body: window.mollieObjectToFormData({
-                    product: <?= (int)$product->getId() ?>,
-                    validationURL: event.validationURL
-                }),
+                body: window.mollieObjectToFormData(formDataObject),
             })
                 .then(response => {
                     if (!response.ok) {
