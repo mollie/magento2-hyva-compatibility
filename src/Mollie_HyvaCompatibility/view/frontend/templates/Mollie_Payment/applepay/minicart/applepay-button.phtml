@@ -7,9 +7,23 @@ use Magento\Framework\Escaper;
  */
 
 ?>
-<script src="<?= $escaper->escapeUrl($block->getViewFileUrl("Mollie_HyvaCompatibility::js/applepay-helpers.js")) ?>"></script>
 <script>
     function initMollieApplePayMinicart() {
+        const objectToFormData = (object, prefix = null, formDataObject = null) => {
+            const formData = formDataObject || new FormData();
+            Object.keys(object).forEach(key => {
+                const value = object[key];
+                const name = prefix ? `${prefix}[${key}]` : key;
+                if (value instanceof Object) {
+                    objectToFormData(value, name, formData);
+                } else {
+                    formData.append(name, value);
+                }
+            });
+
+            return new URLSearchParams(formData).toString();
+        }
+
         const amount = "<?= $escaper->escapeJs($block->getBaseGrandTotal()); ?>";
         let countryCode, postalCode, shippingMethods, selectedShippingMethod, quoteTotals;
 
@@ -111,7 +125,7 @@ use Magento\Framework\Escaper;
                 headers: {
                     'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 },
-                body: mollieObjectToFormData({
+                body: objectToFormData({
                     shippingMethod: selectedShippingMethod,
                     countryCode: countryCode,
                     postalCode: postalCode
@@ -141,7 +155,7 @@ use Magento\Framework\Escaper;
                 headers: {
                     'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 },
-                body: mollieObjectToFormData({
+                body: objectToFormData({
                     shippingMethod: selectedShippingMethod,
                     billingAddress: event.payment.billingContact,
                     shippingAddress: event.payment.shippingContact,
@@ -157,6 +171,16 @@ use Magento\Framework\Escaper;
                 .then(result => {
                     if (!session) {
                         console.warn('Payment canceled');
+                        return;
+                    }
+
+                    if (result.error) {
+                        handleAjaxError(result.error_message);
+                        return;
+                    }
+
+                    if (!result.url) {
+                        handleAjaxError('Something went wrong, please try again later.');
                         return;
                     }
 
@@ -179,7 +203,7 @@ use Magento\Framework\Escaper;
                     headers: {
                         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     },
-                    body: mollieObjectToFormData({validationURL: event.validationURL}),
+                    body: objectToFormData({validationURL: event.validationURL}),
                 }
             )
                 .then((response) => response.json())
