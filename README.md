@@ -1,7 +1,9 @@
 <p align="center">
-  <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/24823946/391588454-5190a43b-c00a-4004-9792-b3c55a89283b.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20241202%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20241202T144509Z&X-Amz-Expires=300&X-Amz-Signature=577ada876b15aadfbf3254b22326166b7ed693a30f3ae45ab27d9a236211b78c&X-Amz-SignedHeaders=host" />
+  <img src="./images/hyva-mollie-header.jpg" />
 </p>
-<h1 align="left">General Hyvä Compatibility for Mollie</h1>
+
+# General Hyvä Compatibility for Mollie
+Hyvä Themes Magento 2 frontend offers the best performance and user experience, without the cost and overhead of a PWA.
 
 ## About Mollie Payments
 With Mollie, you can accept payments and donations online and expand your customer base internationally with support for all major payment methods through a single integration. No need to spend weeks on paperwork or security compliance procedures. No more lost conversions because you don’t support a shopper’s favourite payment method or because they don’t feel safe. We made our products and API expansive, intuitive, and safe for merchants, customers and developers alike.
