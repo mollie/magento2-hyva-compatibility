@@ -77,8 +77,8 @@ use Magento\Framework\Escaper;
                 let session = new ApplePaySession(3, request);
 
                 const getTotal = () => {
-                    let totals = [...quoteTotals];
-                    let total = totals.pop();
+                    // Find grand_total specifically instead of taking the last item
+                    const total = quoteTotals.find(item => item.code === 'grand_total') || quoteTotals[quoteTotals.length - 1];
 
                     total.label = "<?= $escaper->escapeJs($block->getStoreName()); ?>";
 
@@ -87,9 +87,21 @@ use Magento\Framework\Escaper;
 
                 const getLineItems = () => {
                     let totals = [...quoteTotals];
-                    totals.pop();
 
-                    return totals;
+                    // Remove grand_total from line items
+                    totals = totals.filter(item => item.code !== 'grand_total');
+
+                    // This allows for custom filtering through a global event
+                    const filterEvent = new CustomEvent('mollie-applepay-filter-lineitems', {
+                        detail: { lineItems: totals },
+                        bubbles: true,
+                        cancelable: true
+                    });
+
+                    window.dispatchEvent(filterEvent);
+
+                    // Use the potentially modified line items from the event
+                    return filterEvent.detail.lineItems;
                 };
 
                 const handleAjaxError = (message) => {
