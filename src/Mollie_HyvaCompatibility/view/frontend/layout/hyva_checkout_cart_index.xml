@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+  ~ Copyright Magmodules.eu. All rights reserved.
+  ~ See COPYING.txt for license details.
+  -->
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="cart.summary">
+            <block template="Mollie_Payment::applepay/minicart/applepay-button-script.phtml"
+                   class="Mollie\Payment\Block\Applepay\Shortcut\Button"
+                   name="mollie_cart_script"
+                   after="checkout.cart.methods.bottom"
+            />
+        </referenceContainer>
+    </body>
+</page>
