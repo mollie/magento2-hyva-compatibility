@@ -52,6 +52,6 @@ class ApplePay extends \Mollie\Payment\Block\Product\View\ApplePay
 
     public function getProductPrice(): string
     {
-        return $this->priceCurrency->format($this->getProduct()->getFinalPrice());
+        return round($this->getProduct()->getFinalPrice(), 2);
     }
 }
