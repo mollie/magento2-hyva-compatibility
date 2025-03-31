@@ -15,16 +15,15 @@ use Hyva\Theme\ViewModel\HeroiconsOutline;
 /** @var HeroiconsOutline $heroicons */
 $heroicons = $viewModels->require(HeroiconsOutline::class);
 ?>
-<div class="mollie-subscription-options flex flex-wrap gap-2">
+<div class="mollie-subscription-options flex flex-wrap gap-2"
+     x-data="mollieSubscriptionOptions"
+>
     <input type="hidden" id="mollie_subscription_purchase" name="purchase" value="subscription" form="product_addtocart_form" />
     <input type="hidden" id="mollie_subscription_option" name="recurring_metadata[option_id]" form="product_addtocart_form" />
 
     <?php if ($block->allowOneTimePurchase()): ?>
         <button
-            onclick="
-                document.getElementById('mollie_subscription_option').value = 'onetimepurchase';
-                document.getElementById('mollie_subscription_purchase').value = 'onetime';
-            "
+            @click="setOption"
             type="submit"
             class="action primary tocart product-addtocart-button select-subscription"
             value="onetimepurchase"
@@ -35,7 +34,7 @@ $heroicons = $viewModels->require(HeroiconsOutline::class);
 
     <?php foreach ($block->getOptions() as $option): ?>
         <button
-            onclick="document.getElementById('mollie_subscription_option').value = '<?= $escaper->escapeJs($option->getIdentifier()); ?>'"
+            @click="setOption"
             type="submit"
             class="action btn btn-primary tocart product-addtocart-button select-subscription"
             value="<?= $escaper->escapeHtmlAttr($option->getIdentifier()); ?>"
@@ -48,6 +47,29 @@ $heroicons = $viewModels->require(HeroiconsOutline::class);
             </span>
         </button>
     <?php endforeach; ?>
+
+    <script>
+        function mollieSubscriptionOptions() {
+            return {
+                setOption() {
+                    if (this.$el.value === 'onetimepurchase') {
+                        document.getElementById('mollie_subscription_option').value = 'onetimepurchase';
+                        document.getElementById('mollie_subscription_purchase').value = 'onetime';
+                        return;
+                    }
+
+                    document.getElementById('mollie_subscription_option').value = this.$el.value;
+                }
+            }
+        }
+
+        window.addEventListener(
+            'alpine:init',
+            () => Alpine.data('mollieSubscriptionOptions', mollieSubscriptionOptions),
+            {once: true}
+        )
+    </script>
+    <?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>
 
     <?php /** Instant purchase should be hidden when subscriptions are active */ ?>
     <style>#instant-purchase {display: none;}</style>
