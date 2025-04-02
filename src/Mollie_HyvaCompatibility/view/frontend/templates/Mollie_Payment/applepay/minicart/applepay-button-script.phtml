@@ -4,17 +4,16 @@
  * See COPYING.txt for license details.
  */
 
-/** @var \Magento\Framework\Escaper $escaper */
-/** @var \Mollie\Payment\Block\Product\View\ApplePay $block */
+use Magento\Framework\Escaper;
 
-if (!$block->isEnabled()) {
-    return;
-}
+/**
+ * @var \Mollie\Payment\Block\Applepay\Shortcut\Button $block
+ * @var Escaper $escaper
+ */
 
-$product = $block->getProduct();
 ?>
 <script>
-    function initMollieProductPageApplePay<?= (int)$product->getId() ?>() {
+    function prepareMollieApplePayMinicart() {
         const objectToFormData = (object, prefix = null, formDataObject = null) => {
             const formData = formDataObject || new FormData();
             Object.keys(object).forEach(key => {
@@ -28,36 +27,42 @@ $product = $block->getProduct();
             });
 
             return new URLSearchParams(formData).toString();
-        }
+        };
 
         return {
-            startApplePayPayment() {
-                let currencyCode = "<?= $block->escapeJs($block->getCurrencyCode()); ?>";
-                let countryCode = "<?= $block->escapeJs($block->getCountryCode()); ?>";
-                let storeName = "<?= $block->escapeJs($block->getStoreName()); ?>";
-                let supportedNetworks = <?= json_encode($block->getSupportedNetworks()); ?>;
+            totalAmount: 0,
 
-                const form = document.getElementById('product_addtocart_form');
+            init: () => {
+                // Normally we would use private-content-loaded to get this information, but this component is
+                // rendered after this event has been dispatched. So get the information from the browser storage.
+                const browserStorage = hyva.getBrowserStorage();
+                if (browserStorage) {
+                    const cacheStorage = browserStorage.getItem('mage-cache-storage');
+                    const cart = JSON.parse(cacheStorage).cart;
 
-                if (!form.reportValidity()) {
-                    return;
+                    this.totalAmount = cart.subtotalAmount;
                 }
 
-                const getProductPrice = () => {
-                    return "<?= $block->getProductPrice() ?>";
-                }
+                window.addEventListener('private-content-loaded', event => {
+                    this.totalAmount = event.detail.data.cart.subtotalAmount
+                })
+            },
 
-                let cartId, quoteTotals, postalCode, shippingMethods, selectedShippingMethod;
+            pay: () => {
+                // The $block total is more reliable as it holds shipping costs and discounts, but due to some setups
+                // it is sometimes empty. In that case, use the totalAmount from the browser storage.
+                // The correct total amount is retrieved and set during the shipping step.
+                const amount = "<?= $escaper->escapeJs($block->getBaseGrandTotal()); ?>" || this.totalAmount;
+                let countryCode, postalCode, shippingMethods, selectedShippingMethod, quoteTotals;
 
                 const request = {
-                    countryCode: countryCode,
-                    currencyCode: currencyCode,
-                    supportedNetworks: supportedNetworks,
+                    countryCode: "<?= $escaper->escapeJs($block->getStoreCountry()); ?>",
+                    currencyCode: "<?= $escaper->escapeJs($block->getStoreCurrency()); ?>",
+                    supportedNetworks: <?= json_encode($block->getSupportedNetworks()); ?>,
                     merchantCapabilities: ['supports3DS'],
                     total: {
-                        type: 'final',
-                        label: storeName,
-                        amount: getProductPrice(),
+                        label: "<?= $escaper->escapeJs($block->getStoreName()); ?>",
+                        amount: amount
                     },
                     shippingType: 'shipping',
                     requiredBillingContactFields: [
@@ -74,27 +79,26 @@ $product = $block->getProduct();
                     ]
                 }
 
-                let session = new ApplePaySession(10, request);
+                let session = new ApplePaySession(3, request);
+
+                const getTotal = () => {
+                    let totals = [...quoteTotals];
+                    let total = totals.pop();
+
+                    total.label = "<?= $escaper->escapeJs($block->getStoreName()); ?>";
+
+                    return total;
+                };
 
                 const getLineItems = () => {
                     let totals = [...quoteTotals];
                     totals.pop();
 
                     return totals;
-                }
+                };
 
-                const getTotal = () => {
-                    let totals = [...quoteTotals];
-
-                    var total = totals.pop();
-
-                    total.label = storeName;
-
-                    return total;
-                }
-
-                handleAjaxError = (message) => {
-                    if (session) session.abort();
+                const handleAjaxError = (message) => {
+                    session.abort();
 
                     dispatchMessages([
                         {
@@ -102,43 +106,10 @@ $product = $block->getProduct();
                             type: 'error'
                         }
                     ]);
-                }
+                };
 
-                session.onvalidatemerchant = (event) => {
-                    const formData = new FormData(form),
-                          formDataObject = {};
-                    formData.forEach((value, key) => {
-                        formDataObject[key] = value;
-                    });
-                    formDataObject["product"] = <?= (int)$product->getId() ?>;
-                    formDataObject["validationURL"] = event.validationURL;
-
-                    fetch(`${BASE_URL}mollie/applePay/buyNowValidation?form_key=${hyva.getFormKey()}`, {
-                        method: 'POST',
-                        headers: {
-                            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        },
-                        body: objectToFormData({
-                            product: <?= (int)$product->getId() ?>,
-                            validationURL: event.validationURL
-                        }),
-                    })
-                        .then((response) => {
-                            if (!response.ok) {
-                                throw new Error('Merchant validation failed');
-                            }
-
-                            return response.json()
-                        })
-                        .then(result => {
-                            cartId = result.cartId;
-
-                            session.completeMerchantValidation(result.validationData);
-                        })
-                        .catch(error => {
-                            handleAjaxError(error);
-                        });
-
+                session.onpaymentmethodselected = () => {
+                    session.completePaymentMethodSelection(getTotal(), []);
                 };
 
                 session.onshippingcontactselected = (event) => {
@@ -148,13 +119,10 @@ $product = $block->getProduct();
                     fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         },
-                        body: objectToFormData({
-                            cartId: cartId,
-                            countryCode: event.shippingContact.countryCode,
-                            postalCode: event.shippingContact.postalCode
-                        })
+                        body: 'countryCode=' + event.shippingContact.countryCode +
+                            '&postalCode=' + event.shippingContact.postalCode
                     })
                         .then(response => {
                             if (!response.ok) {
@@ -174,9 +142,7 @@ $product = $block->getProduct();
                                 getLineItems()
                             );
                         })
-                        .catch(error => {
-                            handleAjaxError(error);
-                        });
+                        .catch(error => handleAjaxError(error));
                 };
 
                 session.onshippingmethodselected = (event) => {
@@ -185,10 +151,9 @@ $product = $block->getProduct();
                     fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         },
                         body: objectToFormData({
-                            cartId: cartId,
                             shippingMethod: selectedShippingMethod,
                             countryCode: countryCode,
                             postalCode: postalCode
@@ -209,24 +174,20 @@ $product = $block->getProduct();
                                 getLineItems()
                             );
                         })
-                        .catch(error => {
-                            handleAjaxError(error);
-                        });
-
+                        .catch(error => handleAjaxError(error));
                 };
 
                 session.onpaymentauthorized = (event) => {
-                    fetch(`${BASE_URL}mollie/applePay/buyNowPlaceOrder?form_key=${hyva.getFormKey()}`, {
+                    fetch(`${BASE_URL}mollie/applePay/placeOrder?form_key=${hyva.getFormKey()}`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         },
                         body: objectToFormData({
-                            cartId: cartId,
                             shippingMethod: selectedShippingMethod,
                             billingAddress: event.payment.billingContact,
                             shippingAddress: event.payment.shippingContact,
-                            applePayPaymentToken: JSON.stringify(event.payment.token),
+                            applePayPaymentToken: JSON.stringify(event.payment.token)
                         })
                     })
                         .then(response => {
@@ -253,20 +214,40 @@ $product = $block->getProduct();
 
                             session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
+                            window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
+
                             setTimeout(() => {
                                 location.href = result.url;
                             }, 1000);
                         })
-                        .catch(error => {
-                            handleAjaxError(error);
-                        });
+                        .catch(error => handleAjaxError(error));
                 };
 
-                session.oncancel = (event) => {
-                    session = null;
-                    shippingMethods = null;
-                    selectedShippingMethod = null;
+                session.onvalidatemerchant = (event) => {
+                    fetch(
+                        `${BASE_URL}mollie/checkout/applePayValidation?form_key=${hyva.getFormKey()}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            },
+                            body: objectToFormData({validationURL: event.validationURL}),
+                        }
+                    )
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error('Merchant validation failed');
+                            }
+
+                            return response.json()
+                        })
+                        .then((result) => session.completeMerchantValidation(result))
+                        .catch(error => handleAjaxError(error));
                 };
+
+                session.oncancel = () => {
+                    session = null;
+                }
 
                 session.begin();
             }
@@ -275,16 +256,8 @@ $product = $block->getProduct();
 
     window.addEventListener(
         'alpine:init',
-        () => Alpine.data('initMollieProductPageApplePay<?= (int)$product->getId() ?>', initMollieProductPageApplePay<?= (int)$product->getId() ?>),
+        () => Alpine.data('prepareMollieApplePayMinicart', prepareMollieApplePayMinicart),
         {once: true}
     )
 </script>
 <?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>
-
-<div id="product-page-mollie-apple-pay-button" x-data="initMollieProductPageApplePay<?= (int)$product->getId() ?>">
-    <div class="<?= $escaper->escapeHtmlAttr($block->getButtonClasses()); ?> h-full block cursor-pointer ml-2"
-         @click="startApplePayPayment"
-    >
-        <span class="sr-only">Apple Pay</span>
-    </div>
-</div>
