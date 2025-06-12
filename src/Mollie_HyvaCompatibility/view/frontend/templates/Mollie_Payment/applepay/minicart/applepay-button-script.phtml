@@ -49,10 +49,7 @@ use Magento\Framework\Escaper;
             },
 
             pay: () => {
-                // The $block total is more reliable as it holds shipping costs and discounts, but due to some setups
-                // it is sometimes empty. In that case, use the totalAmount from the browser storage.
-                // The correct total amount is retrieved and set during the shipping step.
-                const amount = "<?= $escaper->escapeJs($block->getBaseGrandTotal()); ?>" || this.totalAmount;
+                const amount = this.totalAmount;
                 let countryCode, postalCode, shippingMethods, selectedShippingMethod, quoteTotals;
 
                 const request = {

@@ -8,7 +8,9 @@
         <referenceContainer name="cart-drawer.bottom">
             <block template="Mollie_Payment::applepay/minicart/applepay-button-script.phtml"
                    class="Mollie\Payment\Block\Applepay\Shortcut\Button"
-                   name="mollie_cart_script"/>
+                   name="mollie_cart_script"
+                   ifconfig="payment/mollie_methods_applepay/active"
+            />
         </referenceContainer>
     </body>
 </page>
