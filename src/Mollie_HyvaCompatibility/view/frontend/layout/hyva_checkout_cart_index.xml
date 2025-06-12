@@ -11,6 +11,7 @@
                    class="Mollie\Payment\Block\Applepay\Shortcut\Button"
                    name="mollie_cart_script"
                    after="checkout.cart.methods.bottom"
+                   ifconfig="payment/mollie_methods_applepay/active"
             />
         </referenceContainer>
     </body>
