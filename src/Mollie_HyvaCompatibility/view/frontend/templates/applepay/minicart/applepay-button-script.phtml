@@ -50,8 +50,9 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
             },
 
             isLoading(value) {
-                const loader = this.$refs.loader.querySelector('[x-show="isLoading"]');
-                loader.style.display = value ? '' : 'none'
+                // This loader lives outside the cart in view/frontend/templates/applepay/loader.phtml
+                const eventName = value ? 'mollie-applepay-loading-start' : 'mollie-applepay-loading-stop';
+                window.dispatchEvent(new CustomEvent(eventName, {}))
             },
 
             pay() {
@@ -242,11 +243,7 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
                             session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
-                            window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
-
-                            setTimeout(() => {
-                                location.href = result.url;
-                            }, 1000);
+                            location.href = result.url;
                         })
                         .catch(error => handleAjaxError(error));
                 };

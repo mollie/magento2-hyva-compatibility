@@ -5,7 +5,6 @@
  */
 
 use Magento\Framework\Escaper;
-use Magento\Framework\View\Element\Template;
 use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
 /**
@@ -23,13 +22,5 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
     >
         <span class="sr-only">Buy with</span>
         <span class="logo"></span>
-    </div>
-
-    <div x-ref="loader">
-        <?= $block->getLayout()->createBlock(
-            Template::class,
-            'mollie-cart-loader',
-            ['data' => ['template' => 'Hyva_Theme::ui/loading.phtml']]
-        )->toHtml(); ?>
     </div>
 </div>
