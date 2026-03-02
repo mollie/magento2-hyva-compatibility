@@ -15,6 +15,8 @@ use Hyva\Theme\ViewModel\HeroiconsOutline;
 $heroicons = $viewModels->require(HeroiconsOutline::class);
 
 $subscriptions = $block->getSubscriptions();
+
+$modalViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Modal::class);
 ?>
 
 <?php if (!$subscriptions): ?>
@@ -63,20 +65,29 @@ $subscriptions = $block->getSubscriptions();
                             true
                         ); ?>
 
-                        <form action="<?= /* @noEscape */ $formData['action'] ?>" method="post"
-                              class="inline-flex items-center">
+                        <form method="post"
+                              action="<?= /* @noEscape */ $formData['action'] ?>"
+                              class="inline-flex items-center"
+                              x-data="hyva.modal()"
+                              x-ref="subscription-<?= $subscription->getId(); ?>"
+                        >
                             <?= $block->getBlockHtml('formkey'); ?>
 
                             <input type="hidden" name="data"
                                    value="<?= $escaper->escapeHtmlAttr(json_encode($formData['data'])) ?>"
                             />
 
+                            <?php $confirmation = $modalViewModel->confirm()
+                                ->withDetails($escaper->escapeHtml(__('Are you sure you want to cancel this subscription?'))) ?>
                             <button type="submit"
+                                @click.prevent="<?= $escaper->escapeHtmlAttr($confirmation->getShowJs()) ?>.then(result => result === true ? $refs['subscription-<?= $subscription->getId(); ?>'].submit() : '')"
                                 class="inline-block text-sm underline text-secondary-darker"
                                title="<?= $escaper->escapeHtmlAttr(__('Cancel')); ?>"
                             >
-                                <span><?= $heroicons->xHtml() ?></span>
+                                <span><?= /** @noEscape */ $heroicons->xHtml() ?></span>
                             </button>
+
+                            <?= /** @noEscape */ $confirmation ?>
                         </form>
                     <?php endif; ?>
 
