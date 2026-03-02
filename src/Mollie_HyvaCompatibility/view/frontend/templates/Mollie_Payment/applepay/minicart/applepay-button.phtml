@@ -5,9 +5,10 @@
  */
 
 use Magento\Framework\Escaper;
+use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
 /**
- * @var \Mollie\Payment\Block\Applepay\Shortcut\Button $block
+ * @var Button $block
  * @var Escaper $escaper
  */
 
@@ -16,7 +17,6 @@ use Magento\Framework\Escaper;
      class="mollie-applepay-minicart"
      x-data="prepareMollieApplePayMinicart"
 >
-
     <div class="<?= $block->escapeHtmlAttr($block->getButtonClasses()); ?> cursor-pointer"
          @click="pay"
     >

@@ -33,7 +33,7 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
         return {
             totalAmount: 0,
 
-            init: () => {
+            init() {
                 // Normally we would use private-content-loaded to get this information, but this component is
                 // rendered after this event has been dispatched. So get the information from the browser storage.
                 const browserStorage = hyva.getBrowserStorage();
@@ -49,7 +49,13 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 })
             },
 
-            pay: () => {
+            isLoading(value) {
+                // This loader lives outside the cart in view/frontend/templates/applepay/loader.phtml
+                const eventName = value ? 'mollie-applepay-loading-start' : 'mollie-applepay-loading-stop';
+                window.dispatchEvent(new CustomEvent(eventName, {}))
+            },
+
+            pay() {
                 const amount = this.totalAmount;
                 let countryCode, postalCode, shippingMethods, selectedShippingMethod, quoteTotals;
 
@@ -105,6 +111,7 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 };
 
                 const handleAjaxError = (message) => {
+                    this.isLoading(false);
                     session.abort();
 
                     dispatchMessages([
@@ -131,8 +138,13 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                         body: 'countryCode=' + event.shippingContact.countryCode +
                             '&postalCode=' + event.shippingContact.postalCode
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -166,8 +178,13 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                             postalCode: postalCode
                         })
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -197,8 +214,13 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                             applePayPaymentToken: JSON.stringify(event.payment.token)
                         })
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -221,15 +243,7 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
                             session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
-                            try {
-                                window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
-                            } catch (error) {
-                                console.warn('reload-customer-section-data error:', error.message);
-                            }
-
-                            setTimeout(() => {
-                                location.href = result.url;
-                            }, 1000);
+                            location.href = result.url;
                         })
                         .catch(error => handleAjaxError(error));
                 };
@@ -257,9 +271,11 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 };
 
                 session.oncancel = () => {
+                    this.isLoading(false);
                     session = null;
                 }
 
+                this.isLoading(true);
                 session.begin();
             }
         }
