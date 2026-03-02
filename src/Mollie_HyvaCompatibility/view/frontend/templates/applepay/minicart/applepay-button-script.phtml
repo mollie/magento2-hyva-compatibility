@@ -5,9 +5,10 @@
  */
 
 use Magento\Framework\Escaper;
+use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
 /**
- * @var \Mollie\Payment\Block\Applepay\Shortcut\Button $block
+ * @var Button $block
  * @var Escaper $escaper
  */
 
@@ -220,7 +221,11 @@ use Magento\Framework\Escaper;
 
                             session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
-                            window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
+                            try {
+                                window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
+                            } catch (error) {
+                                console.warn('reload-customer-section-data error:', error.message);
+                            }
 
                             setTimeout(() => {
                                 location.href = result.url;
