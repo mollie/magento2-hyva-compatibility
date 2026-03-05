@@ -4,20 +4,17 @@
  * See COPYING.txt for license details.
  */
 
-use Magento\Framework\Escaper;
-use Mollie\Payment\Block\Applepay\Shortcut\Button;
+ use Magento\Framework\Escaper;
+ use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
-/**
- * @var Button $block
- * @var Escaper $escaper
- */
-
+ /** @var Escaper $escaper */
+ /** @var Button $block */
 ?>
 <div id="mollie_applepay_minicart"
      class="mollie-applepay-minicart"
      x-data="prepareMollieApplePayMinicart"
 >
-    <div class="<?= $block->escapeHtmlAttr($block->getButtonClasses()); ?> cursor-pointer"
+    <div class="<?= $escaper->escapeHtmlAttr($block->getButtonClasses()); ?> cursor-pointer"
          @click="pay"
     >
         <span class="sr-only">Buy with</span>

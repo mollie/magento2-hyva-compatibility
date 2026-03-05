@@ -6,10 +6,12 @@
 
 use Hyva\Theme\Model\ViewModelRegistry;
 use Hyva\Theme\ViewModel\HeroiconsOutline;
+use Magento\Framework\Escaper;
+use Mollie\Subscriptions\Block\Frontend\Customer\Account\ActiveSubscriptions;
 
-/** @var \Magento\Framework\Escaper $escaper */
-/** @var \Mollie\Subscriptions\Block\Frontend\Customer\Account\ActiveSubscriptions $block */
 /** @var ViewModelRegistry $viewModels */
+/** @var Escaper $escaper */
+/** @var ActiveSubscriptions $block */
 
 /** @var HeroiconsOutline $heroicons */
 $heroicons = $viewModels->require(HeroiconsOutline::class);

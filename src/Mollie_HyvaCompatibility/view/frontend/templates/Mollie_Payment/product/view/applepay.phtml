@@ -4,11 +4,11 @@
  * See COPYING.txt for license details.
  */
 
-/** @var Escaper $escaper */
-/** @var ApplePay $block */
-
 use Magento\Framework\Escaper;
 use Mollie\Payment\Block\Product\View\ApplePay;
+
+/** @var Escaper $escaper */
+/** @var ApplePay $block */
 
 if (!$block->isEnabled()) {
     return;
@@ -37,9 +37,9 @@ $product = $block->getProduct();
             isLoading: false,
 
             startApplePayPayment() {
-                let currencyCode = "<?= $block->escapeJs($block->getCurrencyCode()); ?>";
-                let countryCode = "<?= $block->escapeJs($block->getCountryCode()); ?>";
-                let storeName = "<?= $block->escapeJs($block->getStoreName()); ?>";
+                let currencyCode = "<?= $escaper->escapeJs($block->getCurrencyCode()); ?>";
+                let countryCode = "<?= $escaper->escapeJs($block->getCountryCode()); ?>";
+                let storeName = "<?= $escaper->escapeJs($block->getStoreName()); ?>";
                 let supportedNetworks = <?= json_encode($block->getSupportedNetworks()); ?>;
 
                 const form = document.getElementById('product_addtocart_form');
