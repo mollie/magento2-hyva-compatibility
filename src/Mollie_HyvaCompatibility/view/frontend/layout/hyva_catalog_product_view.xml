@@ -9,10 +9,9 @@
     </head>
     <body>
         <referenceBlock name="product.info.addtocart">
-            <block class="Mollie\HyvaCompatibility\Block\Product\View\ApplePay" name="mollie.applepay.button" template="Mollie_Payment::product/view/applepay.phtml" />
-        </referenceBlock>
-        <referenceBlock name="product.info.addtocart.additional">
-            <block class="Mollie\HyvaCompatibility\Block\Product\View\ApplePay" name="mollie.applepay.button.additional" template="Mollie_Payment::product/view/applepay.phtml" />
+            <block class="Mollie\HyvaCompatibility\Block\Product\View\ApplePay" name="mollie.applepay.button" template="Mollie_Payment::product/view/applepay.phtml">
+                <block name="mollie-loader" template="Hyva_Theme::ui/loading.phtml"/>
+            </block>
         </referenceBlock>
     </body>
 </page>

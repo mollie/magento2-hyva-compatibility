@@ -4,8 +4,11 @@
  * See COPYING.txt for license details.
  */
 
-/** @var \Magento\Framework\Escaper $escaper */
-/** @var \Mollie\Payment\Block\Product\View\ApplePay $block */
+use Magento\Framework\Escaper;
+use Mollie\Payment\Block\Product\View\ApplePay;
+
+/** @var Escaper $escaper */
+/** @var ApplePay $block */
 
 if (!$block->isEnabled()) {
     return;
@@ -31,10 +34,12 @@ $product = $block->getProduct();
         }
 
         return {
+            isLoading: false,
+
             startApplePayPayment() {
-                let currencyCode = "<?= $block->escapeJs($block->getCurrencyCode()); ?>";
-                let countryCode = "<?= $block->escapeJs($block->getCountryCode()); ?>";
-                let storeName = "<?= $block->escapeJs($block->getStoreName()); ?>";
+                let currencyCode = "<?= $escaper->escapeJs($block->getCurrencyCode()); ?>";
+                let countryCode = "<?= $escaper->escapeJs($block->getCountryCode()); ?>";
+                let storeName = "<?= $escaper->escapeJs($block->getStoreName()); ?>";
                 let supportedNetworks = <?= json_encode($block->getSupportedNetworks()); ?>;
 
                 const form = document.getElementById('product_addtocart_form');
@@ -102,6 +107,7 @@ $product = $block->getProduct();
                 }
 
                 const handleAjaxError = (message) => {
+                    this.isLoading = false;
                     if (session) session.abort();
 
                     dispatchMessages([
@@ -164,8 +170,13 @@ $product = $block->getProduct();
                             postalCode: event.shippingContact.postalCode
                         })
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -202,8 +213,13 @@ $product = $block->getProduct();
                             postalCode: postalCode
                         })
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -237,14 +253,20 @@ $product = $block->getProduct();
                             applePayPaymentToken: JSON.stringify(event.payment.token),
                         })
                     })
-                        .then(response => {
+                        .then(async response => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
                         })
                         .then(result => {
                             if (!session) {
+                                this.isLoading = false;
                                 console.warn('Payment canceled');
                                 return;
                             }
@@ -271,11 +293,13 @@ $product = $block->getProduct();
                 };
 
                 session.oncancel = (event) => {
+                    this.isLoading = false;
                     session = null;
                     shippingMethods = null;
                     selectedShippingMethod = null;
                 };
 
+                this.isLoading = true;
                 session.begin();
             }
         }
@@ -295,4 +319,6 @@ $product = $block->getProduct();
     >
         <span class="sr-only">Apple Pay</span>
     </div>
+
+    <?= $block->getChildHtml('mollie-loader') ?>
 </div>
