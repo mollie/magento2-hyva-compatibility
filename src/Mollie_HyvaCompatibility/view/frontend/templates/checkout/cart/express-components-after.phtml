@@ -1,0 +1,92 @@
+<?php
+/*
+ * Copyright Magmodules.eu. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+declare(strict_types=1);
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+/** @var ExpressComponents $magewire */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents;
+
+?>
+
+<script>
+    function mollieExpressCart() {
+        return {
+            drawerOpen: false,
+            sessionCreated: false,
+
+            init() {
+                this.createSession();
+            },
+
+            async createSession() {
+                if (this.sessionCreated) {
+                    return;
+                }
+
+                try {
+                    await this.wire().createSession();
+                    const token = this.wire().clientAccessToken;
+
+                    if (!token) {
+                        return;
+                    }
+
+                    this.sessionCreated = true;
+                    await this.loadMollieJs();
+                    this.mountComponent(token);
+                } catch (error) {
+                    console.error('Mollie Express Components error:', error);
+                }
+            },
+
+            resetSession() {
+                this.sessionCreated = false;
+                const mountDiv = document.getElementById('express-component-cart');
+                if (mountDiv) {
+                    mountDiv.innerHTML = '';
+                }
+            },
+
+            loadMollieJs() {
+                return new Promise((resolve) => {
+                    if (typeof Mollie !== 'undefined') {
+                        resolve();
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = 'https://js.mollie.com/v2/mollie.js';
+                    script.onload = resolve;
+                    document.head.appendChild(script);
+                });
+            },
+
+            mountComponent(token) {
+                const checkout = Mollie.Checkout(token);
+                const component = checkout.create('express-checkout', {
+                    paymentMethods: {
+                        idealcheckout: 'always',
+                        applepay: 'never',
+                        googlepay: 'never',
+                    }
+                });
+                component.mount(document.getElementById('express-component-cart'));
+            },
+
+            wire() {
+                return Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
+            }
+        }
+    }
+
+    window.addEventListener('alpine:init', () => Alpine.data('mollieExpressCart', mollieExpressCart), {once: true});
+</script>
+<?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>

@@ -4,15 +4,33 @@
   ~ See COPYING.txt for license details.
   -->
 
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
-    <body>
-        <referenceContainer name="cart.summary">
-            <block template="Mollie_HyvaCompatibility::applepay/minicart/applepay-button-script.phtml"
-                   class="Mollie\Payment\Block\Applepay\Shortcut\Button"
-                   name="mollie_cart_script"
-                   after="checkout.cart.methods.bottom"
-                   ifconfig="payment/mollie_methods_applepay/active"
-            />
-        </referenceContainer>
-    </body>
-</page>
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/layout_generic.xsd">
+    <referenceContainer name="cart.summary">
+        <block template="Mollie_HyvaCompatibility::applepay/minicart/applepay-button-script.phtml"
+               class="Mollie\Payment\Block\Applepay\Shortcut\Button"
+               name="mollie_cart_script"
+               after="checkout.cart.methods.bottom"
+               ifconfig="payment/mollie_methods_applepay/active"
+        />
+    </referenceContainer>
+
+    <referenceBlock name="mollie.express.components" remove="true" />
+
+    <referenceContainer name="checkout.cart.methods">
+        <block template="Mollie_HyvaCompatibility::checkout/cart/express-components.phtml"
+               name="mollie.express.components.cart"
+               ifconfig="payment/mollie_methods_expresscomponents/active"
+        />
+        <block template="Mollie_HyvaCompatibility::checkout/cart/express-components-after.phtml"
+               name="mollie.express.components.cart.after"
+               ifconfig="payment/mollie_methods_expresscomponents/active"
+        >
+            <arguments>
+                <argument name="magewire" xsi:type="object">
+                    Mollie\HyvaCompatibility\Magewire\Cart\ExpressComponents
+                </argument>
+            </arguments>
+        </block>
+    </referenceContainer>
+</layout>
