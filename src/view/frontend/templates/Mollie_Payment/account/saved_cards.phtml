@@ -1,0 +1,87 @@
+<?php
+/*
+ * Copyright Magmodules.eu. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var \Mollie\Payment\Block\Account\SavedCards $block */
+/** @var \Magento\Framework\Escaper $escaper */
+
+$mandates = $block->getMandates();
+?>
+<div class="mb-6">
+    <div class="mb-4">
+        <h2 class="text-xl font-semibold"><?= $escaper->escapeHtml(__('Saved cards')) ?></h2>
+    </div>
+
+    <?php if ($mandates === []): ?>
+        <div class="message info empty">
+            <span><?= $escaper->escapeHtml(__('You have no saved cards.')) ?></span>
+        </div>
+    <?php else: ?>
+        <div class="card">
+            <div class="grid grid-cols-3 border-b border-container">
+                <div class="text-sm text-secondary p-2 font-semibold"><?= $escaper->escapeHtml(__('Card')) ?></div>
+                <div class="text-sm text-secondary p-2 font-semibold"><?= $escaper->escapeHtml(__('Expires')) ?></div>
+                <div class="text-sm text-secondary p-2 font-semibold"><?= $escaper->escapeHtml(__('Actions')) ?></div>
+            </div>
+
+            <?php $i = 0; ?>
+            <?php foreach ($mandates as $mandate): ?>
+                <?php $i++; ?>
+                <div class="grid grid-cols-3 <?= $i % 2 !== 0 ? 'bg-container-darker' : '' ?>">
+                    <div class="p-2 flex items-center gap-2">
+                        <?php $logoUrl = $block->getCardLogoUrl($mandate['card_label']); ?>
+                        <?php if ($logoUrl): ?>
+                            <img src="<?= $block->escapeUrl($logoUrl) ?>"
+                                 alt="<?= $escaper->escapeHtmlAttr($mandate['card_label']) ?>"
+                                 width="38"
+                                 height="24"/>
+                        <?php endif ?>
+                        <span>
+                            <?= $escaper->escapeHtml($mandate['card_label']) ?>
+                            <?= $escaper->escapeHtml(__('ending in %1', $mandate['card_number_last4'])) ?>
+                        </span>
+                    </div>
+                    <div class="p-2 flex items-center">
+                        <?php if (($mandate['card_expiry_date'] ?? '') !== ''): ?>
+                            <?= $escaper->escapeHtml(__('Expires %1', $mandate['card_expiry_date'])) ?>
+                        <?php endif ?>
+                    </div>
+                    <div class="p-2 flex items-center"
+                         x-data="{ confirmDelete: false }">
+                        <template x-if="!confirmDelete">
+                            <button type="button"
+                                    class="inline-block text-sm underline text-secondary-darker"
+                                    @click="confirmDelete = true">
+                                <?= $escaper->escapeHtml(__('Remove')) ?>
+                            </button>
+                        </template>
+                        <template x-if="confirmDelete">
+                            <form method="post"
+                                  action="<?= $block->escapeUrl($block->getDeleteUrl()) ?>"
+                                  class="flex items-center gap-2">
+                                <input type="hidden"
+                                       name="form_key"
+                                       value="<?= $escaper->escapeHtml($block->getFormKey()) ?>">
+                                <input type="hidden"
+                                       name="mandate_id"
+                                       value="<?= $escaper->escapeHtml($mandate['mandate_id']) ?>">
+                                <span class="text-sm"><?= $escaper->escapeHtml(__('Are you sure?')) ?></span>
+                                <button type="submit"
+                                        class="inline-block text-sm underline text-red-600">
+                                    <?= $escaper->escapeHtml(__('Yes, remove')) ?>
+                                </button>
+                                <button type="button"
+                                        class="inline-block text-sm underline text-secondary-darker"
+                                        @click="confirmDelete = false">
+                                    <?= $escaper->escapeHtml(__('Cancel')) ?>
+                                </button>
+                            </form>
+                        </template>
+                    </div>
+                </div>
+            <?php endforeach ?>
+        </div>
+    <?php endif ?>
+</div>

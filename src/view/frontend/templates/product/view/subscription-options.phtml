@@ -29,13 +29,13 @@ $showPriceInSubscriptionButton = method_exists($block, 'showPriceInSubscriptionB
             type="submit"
             class="btn btn-secondary action primary tocart product-addtocart-button select-subscription"
             value="onetimepurchase"
-            title="<?= __('One Time Purchase') ?>"
+            title="<?= $escaper->escapeHtmlAttr(__('One Time Purchase')) ?>"
             form="product_addtocart_form"
         >
-            <?= __('One Time Purchase'); ?>
+            <?= $escaper->escapeHtml(__('One Time Purchase')); ?>
 
             <?php if ($showPriceInSubscriptionButton): ?>
-                <?= $block->formatPrice($block->getProductPrice()) ?>
+                <?= /* @noEscape */ $block->formatPrice($block->getProductPrice()) ?>
             <?php endif; ?>
         </button>
     <?php endif; ?>
@@ -54,7 +54,7 @@ $showPriceInSubscriptionButton = method_exists($block, 'showPriceInSubscriptionB
                 <?= $escaper->escapeHtml($option->getTitle()); ?>
 
                 <?php if ($showPriceInSubscriptionButton && $option->getPrice()): ?>
-                    <?= $block->formatPrice($option->getPrice()) ?>
+                    <?= /* @noEscape */ $block->formatPrice($option->getPrice()) ?>
                 <?php endif; ?>
             </span>
         </button>

@@ -1,0 +1,13 @@
+parameters:
+    level: 2
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - '#^Call to an undefined method .*Interface::.*\(\)\.$#'
+        - '#^Call to an undefined method Mollie\\Subscriptions\\.*::.*\(\)\.$#'
+        - '#^Call to method .* on an unknown class Mollie\\Subscriptions\\.*\.$#'
+        - '#^Variable \$this might not be defined\.$#'
+    fileExtensions:
+        - php
+        - phtml
+    excludePaths:
+        - Test/*

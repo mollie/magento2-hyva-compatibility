@@ -5,7 +5,7 @@
  */
 
 /** @var \Magento\Framework\Escaper $escaper */
-/** @var \Mollie\Payment\Block\Product\View\ApplePay $block */
+/** @var \Mollie\HyvaCompatibility\Block\Product\View\ApplePay $block */
 
 if (!$block->isEnabled()) {
     return;
@@ -35,7 +35,7 @@ $product = $block->getProduct();
                 let currencyCode = "<?= $block->escapeJs($block->getCurrencyCode()); ?>";
                 let countryCode = "<?= $block->escapeJs($block->getCountryCode()); ?>";
                 let storeName = "<?= $block->escapeJs($block->getStoreName()); ?>";
-                let supportedNetworks = <?= json_encode($block->getSupportedNetworks()); ?>;
+                let supportedNetworks = <?= /* @noEscape */ json_encode($block->getSupportedNetworks()); ?>;
 
                 const form = document.getElementById('product_addtocart_form');
 
@@ -44,7 +44,7 @@ $product = $block->getProduct();
                 }
 
                 const getProductPrice = () => {
-                    return "<?= $block->getProductPrice() ?>";
+                    return "<?= /* @noEscape */ $block->getProductPrice() ?>";
                 }
 
                 let cartId, quoteTotals, postalCode, shippingMethods, selectedShippingMethod;
