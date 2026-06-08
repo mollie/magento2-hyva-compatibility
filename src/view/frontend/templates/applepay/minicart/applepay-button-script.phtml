@@ -60,7 +60,7 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 const request = {
                     countryCode: "<?= $escaper->escapeJs($block->getStoreCountry()); ?>",
                     currencyCode: "<?= $escaper->escapeJs($block->getStoreCurrency()); ?>",
-                    supportedNetworks: <?= json_encode($block->getSupportedNetworks()); ?>,
+                    supportedNetworks: <?= /* @noEscape */ json_encode($block->getSupportedNetworks()); ?>,
                     merchantCapabilities: ['supports3DS'],
                     total: {
                         label: "<?= $escaper->escapeJs($block->getStoreName()); ?>",

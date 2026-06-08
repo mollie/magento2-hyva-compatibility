@@ -1,0 +1,10 @@
+{
+  "name": "mollie-hyva-compatibility-e2e",
+  "version": "1.0.0",
+  "description": "End-to-end tests for the Mollie Hyva compatibility module",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.47.2",
+    "@types/node": "^22.7.4"
+  }
+}

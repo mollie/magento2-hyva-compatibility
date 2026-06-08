@@ -9,14 +9,14 @@
   "require": {
     "magento/framework": "*",
     "hyva-themes/magento2-compat-module-fallback": "*",
-    "mollie/magento2": ">=2.31.0"
+    "mollie/magento2": "^3.0.0"
   },
   "autoload": {
     "files": [
-        "src/Mollie_HyvaCompatibility/registration.php"
+        "src/registration.php"
     ],
     "psr-4": {
-      "Mollie\\HyvaCompatibility\\": "src/Mollie_HyvaCompatibility"
+      "Mollie\\HyvaCompatibility\\": "src"
     }
   }
 }

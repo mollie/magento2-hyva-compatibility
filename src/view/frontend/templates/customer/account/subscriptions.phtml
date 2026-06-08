@@ -46,10 +46,10 @@ $modalViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Modal::class);
                 <?= /* @noEscape */ $block->formatDate($subscription->getCreatedAt()) ?>
             </div>
             <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
-                <?= $subscription->getStatus() ?>
+                <?= $block->escapeHtml($subscription->getStatus()) ?>
             </div>
             <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
-                <?= $subscription->getDescription() ?>
+                <?= $block->escapeHtml($subscription->getDescription()) ?>
             </div>
             <div class="p-2 flex items-center <?= $i % 2 === 0 ? '' : ' bg-container-darker' ?>">
                 <?= /* @noEscape */ $block->formatPrice($subscription->getAmount()) ?>
@@ -121,40 +121,5 @@ $modalViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Modal::class);
                 <?php endif; ?>
             </div>
         <?php endforeach; ?>
-        <!--<table class="data table table-order-items history w-full" id="my-orders-table">
-            <?php foreach ($subscriptions as $subscription): ?>
-                <tr>
-                    <td data-th="<?= $block->escapeHtml(__('ID')) ?>" class="col id"><?= $block->escapeHtml($subscription->getId()) ?></td>
-                    <td data-th="<?= $block->escapeHtml(__('Date')) ?>" class="col date"><?= /* @noEscape */ $block->formatDate($subscription->getCreatedAt()) ?></td>
-                    <?php $extra = $block->getChildBlock('extra.container'); ?>
-                    <?php if ($extra) : ?>
-                        <?php $extra->setSubscription($subscription); ?>
-                        <?= $extra->getChildHtml() ?>
-                    <?php endif; ?>
-                    <td data-th="<?= $block->escapeHtml(__('Status')) ?>" class="col"><?= $subscription->getStatus() ?></td>
-                    <td data-th="<?= $block->escapeHtml(__('Description')) ?>" class="col"><?= $subscription->getDescription() ?></td>
-                    <td data-th="<?= $block->escapeHtml(__('Total')) ?>" class="col total"><?= /* @noEscape */ $block->formatPrice($subscription->getAmount()) ?></td>
-                    <?php /**
-                    <td data-th="<?= $block->escapeHtml(__('Status')) ?>" class="col status"><?= $block->escapeHtml($_order->getStatusLabel()) ?></td>
-                     */ ?>
-                    <td data-th="<?= $block->escapeHtml(__('Actions')) ?>" class="col actions">
-                        <?php if (!$block->hasParent($subscription->getId())): ?>
-                            <?php if ($subscription->getStatus() == 'active'): ?>
-                                <a href="#" data-post='{"action": "<?=$block->getUrl('mollie_subscriptions/index/cancel'); ?>", "data": {"subscription_id": "<?=$subscription->getId(); ?>", "confirmation": true, "confirmationMessage": "<?=__('Are you sure you want to delete the subscription with ID %1?', $subscription->getId()); ?>"}}' class="action delete">
-                                    <span><?= $block->escapeHtml(__('Cancel')); ?></span>
-                                </a>
-                            <?php endif; ?>
-
-                            <?php if ($subscription->getStatus() == 'canceled'): ?>
-                                <a href="#" data-post='{"action": "<?=$block->getUrl('mollie_subscriptions/index/restart'); ?>", "data": {"subscription_id": "<?=$subscription->getId(); ?>"}}' class="action">
-                                    <span><?= $block->escapeHtml(__('Restart')); ?></span>
-                                </a>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>-->
     </div>
 <?php endif; ?>
