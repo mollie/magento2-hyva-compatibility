@@ -22,13 +22,23 @@ composer config repositories.hyva-themes/magento2-email-module git git@gitlab.hy
 composer config repositories.hyva-themes/magento2-default-theme git git@gitlab.hyva.io:hyva-themes/magento2-default-theme.git
 composer config repositories.hyva-themes/magento2-default-theme-csp git git@gitlab.hyva.io:hyva-themes/magento2-default-theme-csp.git
 composer config repositories.hyva-themes/magento2-compat-module-fallback git git@gitlab.hyva.io:hyva-themes/magento2-compat-module-fallback.git
+composer config repositories.hyva-themes/magento2-order-cancellation-webapi git git@gitlab.hyva.io:hyva-themes/magento2-order-cancellation-webapi.git
+composer config repositories.hyva-themes/magento2-base-layout-reset git git@gitlab.hyva.io:hyva-themes/magento2-base-layout-reset.git
 
-composer require hyva-themes/magento2-default-theme-csp
+# magento2-theme-module pulls in magento2-mollie-theme-bundle, which hard-pins
+# mollie/magento2-hyva-compatibility ^2.1.1 and conflicts with the v3 branch under test.
+# Replace it so Composer skips installing it; the compatibility module is tested directly.
+jq '.replace["hyva-themes/magento2-mollie-theme-bundle"] = "*"' composer.json > composer.tmp.json && mv composer.tmp.json composer.json
+
+composer require hyva-themes/magento2-default-theme-csp hyva-themes/magento2-theme-module:^1.4
 
 bin/magento setup:upgrade --keep-generated
 
-# Set Hyva Default CSP theme (theme_id=5) for the default store view
-magerun2 config:store:set design/theme/theme_id 5 --scope=stores --scope-id=1
+# Activate the Hyvä Default CSP theme. The numeric theme_id shifts between Hyvä
+# releases, so resolve it by code instead of hardcoding a magic number.
+csp_theme_id=$(magerun2 --no-ansi db:query "SELECT theme_id FROM theme WHERE area = 'frontend' AND code = 'Hyva/default-csp' LIMIT 1" 2>/dev/null | grep -xE '[0-9]+' | head -n1)
+magerun2 config:store:set design/theme/theme_id "$csp_theme_id" --scope=default --scope-id=0
+magerun2 config:store:set design/theme/theme_id "$csp_theme_id" --scope=stores --scope-id=1
 
 # Enable CSP
 magerun2 config:store:set system/default/csp/policies/storefront/scripts/inline 0
@@ -38,4 +48,4 @@ magerun2 config:store:set system/default/csp/mode/storefront/report_only 0
 bin/magento hyva:config:generate
 
 npm --prefix vendor/hyva-themes/magento2-default-theme-csp/web/tailwind/ ci
-npm --prefix vendor/hyva-themes/magento2-default-theme-csp/web/tailwind/ run build-prod
+npm --prefix vendor/hyva-themes/magento2-default-theme-csp/web/tailwind/ run build
