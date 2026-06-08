@@ -1,15 +1,30 @@
-name: phpstan
+name: Phpstan
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
+  secrets-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      is-secret-set: ${{ steps.is-secret-set.outputs.is_hyva_ssh_private_key_set }}
+    steps:
+      - id: is-secret-set
+        env:
+          HYVA_SSH_PRIVATE_KEY: ${{ secrets.HYVA_SSH_PRIVATE_KEY }}
+        if: "${{ env.HYVA_SSH_PRIVATE_KEY != '' }}"
+        run: echo "is_hyva_ssh_private_key_set=true" >> $GITHUB_OUTPUT
+
   build:
+    needs:
+      - secrets-gate
+    # Only run if the secret is set
+    if: needs.secrets-gate.outputs.is-secret-set == 'true'
     strategy:
       matrix:
         include:
           - PHP_VERSION: php82-fpm
             MAGENTO_VERSION: 2.4.7-p8
-          - PHP_VERSION: php84-fpm
-            MAGENTO_VERSION: 2.4.8-p3
+          - PHP_VERSION: php85-fpm
+            MAGENTO_VERSION: 2.4.9
 
     name: PHP ${{ matrix.PHP_VERSION }} Magento ${{ matrix.MAGENTO_VERSION }}
 
