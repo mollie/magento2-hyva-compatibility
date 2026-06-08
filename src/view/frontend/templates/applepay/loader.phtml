@@ -1,0 +1,39 @@
+<?php
+/** @var Template $block */
+
+use Magento\Framework\View\Element\Template;
+
+?>
+<div class="mollie-applepay-loader"
+    x-data="mollieApplePayLoader"
+     @mollie-applepay-loading-start.window="showLoader"
+     @mollie-applepay-loading-stop.window="hideLoader"
+>
+    <?= $block->getChildHtml('mollie-applepay-loader') ?>
+</div>
+<script>
+    function mollieApplePayLoader() {
+        return {
+            loading: false,
+
+            isLoading() {
+                return this.loading;
+            },
+
+            showLoader() {
+                this.loading = true;
+            },
+
+            hideLoader() {
+                this.loading = false;
+            }
+        }
+    }
+
+    window.addEventListener(
+        'alpine:init',
+        () => Alpine.data('mollieApplePayLoader', mollieApplePayLoader),
+        {once: true}
+    )
+</script>
+<?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>

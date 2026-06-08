@@ -5,11 +5,10 @@
  */
 
 use Magento\Framework\Escaper;
+use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
-/**
- * @var \Mollie\Payment\Block\Applepay\Shortcut\Button $block
- * @var Escaper $escaper
- */
+/** @var Escaper $escaper */
+/** @var Button $block */
 
 ?>
 <script>
@@ -32,7 +31,7 @@ use Magento\Framework\Escaper;
         return {
             totalAmount: 0,
 
-            init: () => {
+            init() {
                 // Normally we would use private-content-loaded to get this information, but this component is
                 // rendered after this event has been dispatched. So get the information from the browser storage.
                 const browserStorage = hyva.getBrowserStorage();
@@ -48,7 +47,13 @@ use Magento\Framework\Escaper;
                 })
             },
 
-            pay: () => {
+            isLoading(value) {
+                // This loader lives outside the cart in view/frontend/templates/applepay/loader.phtml
+                const eventName = value ? 'mollie-applepay-loading-start' : 'mollie-applepay-loading-stop';
+                window.dispatchEvent(new CustomEvent(eventName, {}))
+            },
+
+            pay() {
                 const amount = this.totalAmount;
                 let countryCode, postalCode, shippingMethods, selectedShippingMethod, quoteTotals;
 
@@ -104,6 +109,7 @@ use Magento\Framework\Escaper;
                 };
 
                 const handleAjaxError = (message) => {
+                    this.isLoading(false);
                     session.abort();
 
                     dispatchMessages([
@@ -130,8 +136,13 @@ use Magento\Framework\Escaper;
                         body: 'countryCode=' + event.shippingContact.countryCode +
                             '&postalCode=' + event.shippingContact.postalCode
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -165,8 +176,13 @@ use Magento\Framework\Escaper;
                             postalCode: postalCode
                         })
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -196,8 +212,13 @@ use Magento\Framework\Escaper;
                             applePayPaymentToken: JSON.stringify(event.payment.token)
                         })
                     })
-                        .then(response => {
+                        .then(async (response) => {
                             if (!response.ok) {
+                                const data = await response.json();
+                                if (data.message) {
+                                    throw new Error(data.message);
+                                }
+
                                 throw new Error('Network response was not ok');
                             }
                             return response.json();
@@ -220,11 +241,7 @@ use Magento\Framework\Escaper;
 
                             session.completePayment(ApplePaySession.STATUS_SUCCESS);
 
-                            window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
-
-                            setTimeout(() => {
-                                location.href = result.url;
-                            }, 1000);
+                            location.href = result.url;
                         })
                         .catch(error => handleAjaxError(error));
                 };
@@ -252,9 +269,11 @@ use Magento\Framework\Escaper;
                 };
 
                 session.oncancel = () => {
+                    this.isLoading(false);
                     session = null;
                 }
 
+                this.isLoading(true);
                 session.begin();
             }
         }

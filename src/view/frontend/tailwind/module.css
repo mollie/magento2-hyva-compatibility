@@ -1,0 +1,12 @@
+/*
+ *  Copyright Magmodules.eu. All rights reserved.
+ *  See COPYING.txt for license details.
+ */
+
+@source "../templates/**/*.phtml";
+
+@import "./mollie.css";
+
+@source inline("mollie-component");
+@source inline("mollie-card-component");
+@source inline("apple-pay-button");
