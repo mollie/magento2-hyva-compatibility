@@ -71,7 +71,7 @@ $modalViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Modal::class);
                               action="<?= /* @noEscape */ $formData['action'] ?>"
                               class="inline-flex items-center"
                               x-data="hyva.modal()"
-                              x-ref="subscription-<?= $subscription->getId(); ?>"
+                              x-ref="subscription-<?= $escaper->escapeHtmlAttr($subscription->getId()); ?>"
                         >
                             <?= $block->getBlockHtml('formkey'); ?>
 
@@ -82,14 +82,14 @@ $modalViewModel = $viewModels->require(\Hyva\Theme\ViewModel\Modal::class);
                             <?php $confirmation = $modalViewModel->confirm()
                                 ->withDetails($escaper->escapeHtml(__('Are you sure you want to cancel this subscription?'))) ?>
                             <button type="submit"
-                                @click.prevent="<?= $escaper->escapeHtmlAttr($confirmation->getShowJs()) ?>.then(result => result === true ? $refs['subscription-<?= $subscription->getId(); ?>'].submit() : '')"
+                                @click.prevent="<?= $escaper->escapeHtmlAttr($confirmation->getShowJs()) ?>.then(result => result === true ? $refs['subscription-<?= $escaper->escapeHtmlAttr($subscription->getId()); ?>'].submit() : '')"
                                 class="inline-block text-sm underline text-secondary-darker"
                                title="<?= $escaper->escapeHtmlAttr(__('Cancel')); ?>"
                             >
                                 <span><?= /** @noEscape */ $heroicons->xHtml() ?></span>
                             </button>
 
-                            <?= /** @noEscape */ $confirmation ?>
+                            <?= /** @noEscape */ $confirmation->render() ?>
                         </form>
                     <?php endif; ?>
 
