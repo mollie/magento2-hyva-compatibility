@@ -12,5 +12,25 @@
                    ifconfig="payment/mollie_methods_applepay/active"
             />
         </referenceContainer>
+
+        <referenceContainer name="extra_actions">
+            <block template="Mollie_HyvaCompatibility::checkout/minicart/express-components.phtml"
+                   name="mollie.express.components.minicart"
+                   ifconfig="payment/mollie_methods_expresscomponents/active"
+            />
+        </referenceContainer>
+
+        <referenceContainer name="header.container">
+            <block template="Mollie_HyvaCompatibility::checkout/minicart/express-components-after.phtml"
+                   name="mollie.express.components.minicart.after"
+                   ifconfig="payment/mollie_methods_expresscomponents/active"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
     </body>
 </page>

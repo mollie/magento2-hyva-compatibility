@@ -132,10 +132,7 @@ $product = $block->getProduct();
                         headers: {
                             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         },
-                        body: objectToFormData({
-                            product: <?= (int)$product->getId() ?>,
-                            validationURL: event.validationURL
-                        }),
+                        body: objectToFormData(formDataObject),
                     })
                         .then((response) => {
                             if (!response.ok) {

@@ -15,6 +15,25 @@
             />
         </referenceContainer>
 
+        <referenceBlock name="mollie.express.components" remove="true" />
+
+        <referenceContainer name="checkout.cart.methods">
+            <block template="Mollie_HyvaCompatibility::checkout/cart/express-components.phtml"
+                   name="mollie.express.components.cart"
+                   ifconfig="payment/mollie_methods_expresscomponents/active"
+            />
+            <block template="Mollie_HyvaCompatibility::checkout/cart/express-components-after.phtml"
+                   name="mollie.express.components.cart.after"
+                   ifconfig="payment/mollie_methods_expresscomponents/active"
+            >
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        Mollie\HyvaCompatibility\Magewire\Cart\ExpressComponents
+                    </argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+
         <referenceBlock name="content">
             <block template="Mollie_HyvaCompatibility::applepay/loader.phtml"
                    ifconfig="payment/mollie_methods_applepay/active"
