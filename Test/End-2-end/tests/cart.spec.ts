@@ -3,15 +3,15 @@
  * See COPYING.txt for license details.
  */
 
-import { test } from '@playwright/test';
+import { test } from '../support/fixtures';
 import ProductPage from 'Pages/frontend/ProductPage';
 import CartPage from 'Pages/frontend/CartPage';
 
 const productPage = new ProductPage();
 const cartPage = new CartPage();
 
-test.beforeEach(async ({ page }) => {
-  await productPage.visit(page);
+test.beforeEach(async ({ page, simpleProductId }) => {
+  await productPage.visit(page, simpleProductId);
   await productPage.addToCart(page);
 });
 

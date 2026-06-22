@@ -77,7 +77,7 @@ jobs:
 
       - name: Activate the extension
         run: |
-          docker exec magento-project-community-edition ./retry "php bin/magento module:enable Mollie_Payment Mollie_HyvaCompatibility"
+          docker exec magento-project-community-edition ./retry "php bin/magento module:enable Mollie_Payment Mollie_HyvaCompatibility Hyva_CompatModuleFallback"
           docker exec magento-project-community-edition ./retry "php bin/magento setup:upgrade --no-interaction --keep-generated"
           docker exec magento-project-community-edition ./retry "bin/magento config:set payment/mollie_general/use_webhooks custom_url"
           docker exec magento-project-community-edition ./retry "bin/magento config:set payment/mollie_general/custom_webhook_url ${{ env.magento_url }}/mollie/checkout/webhook"
@@ -86,6 +86,20 @@ jobs:
       - name: Configure Mollie
         run: |
           docker exec magento-project-community-edition /bin/bash /data/configure-mollie.sh
+
+      # install-hyva.sh builds the theme CSS before the Mollie modules exist, so the
+      # module's Tailwind sources (e.g. the Apple Pay button styling) are missing. Rebuild
+      # the theme CSS now that Mollie_HyvaCompatibility is installed and its sources can be
+      # picked up. The static-content:deploy in the next step ships the rebuilt CSS.
+      - name: Rebuild the Hyvä CSS with the Mollie module installed
+        run: |
+          TAILWIND_DIR=vendor/hyva-themes/magento2-default-theme-csp/web/tailwind
+          docker exec magento-project-community-edition ./retry "php bin/magento hyva:config:generate"
+          # Newer Hyvä themes expose a "build" script, older ones use "build-prod". Run
+          # whichever exists; --if-present is a no-op when the script is missing. "build" runs
+          # first so "build-prod" wins on themes that ship both.
+          docker exec magento-project-community-edition npm --prefix "$TAILWIND_DIR" run --if-present build
+          docker exec magento-project-community-edition npm --prefix "$TAILWIND_DIR" run --if-present build-prod
 
       - name: Prepare Magento
         run: |
