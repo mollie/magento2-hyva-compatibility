@@ -5,6 +5,7 @@
 
 import { test as base } from '@playwright/test';
 import { getProductIdBySku } from './magento-rest';
+import { createOrderAwaitingConfirmation, createPointOfSaleOrder, PendingOrder } from './mollie-order-rest';
 
 export type ProductSkus = {
   simpleProductSku: string;
@@ -16,7 +17,12 @@ type ResolvedProductIds = {
   configurableProductId: number;
 };
 
-export const test = base.extend<ProductSkus & ResolvedProductIds>({
+type MollieOrders = {
+  orderAwaitingConfirmation: PendingOrder;
+  pointOfSaleOrder: PendingOrder | null;
+};
+
+export const test = base.extend<ProductSkus & ResolvedProductIds & MollieOrders>({
   simpleProductSku: ['24-MB05', { option: true }],
   configurableProductSku: ['MH01', { option: true }],
 
@@ -25,6 +31,12 @@ export const test = base.extend<ProductSkus & ResolvedProductIds>({
   },
   configurableProductId: async ({ baseURL, configurableProductSku }, use) => {
     await use(await getProductIdBySku(baseURL!, process.env.admin_token!, configurableProductSku));
+  },
+  orderAwaitingConfirmation: async ({ baseURL, simpleProductSku }, use) => {
+    await use(await createOrderAwaitingConfirmation(baseURL!, simpleProductSku));
+  },
+  pointOfSaleOrder: async ({ baseURL, simpleProductSku }, use) => {
+    await use(await createPointOfSaleOrder(baseURL!, simpleProductSku));
   },
 });
 

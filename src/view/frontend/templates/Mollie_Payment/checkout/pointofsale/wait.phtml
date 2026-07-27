@@ -1,0 +1,144 @@
+<?php
+/*
+ * Copyright Magmodules.eu. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+declare(strict_types=1);
+
+/*
+ * Covers a Hyvä theme running a non-Hyvä checkout (Luma fallback, headless). Mollie_HyvaCheckout
+ * ships a Magewire version of this page, but it disables itself when Hyva_Checkout is absent, so
+ * without this template the stock RequireJS one renders and never polls. When both modules are
+ * installed either implementation works; the compat module resolution order decides which renders.
+ */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+?>
+
+<div x-data="molliePointOfSaleWait" class="container mx-auto py-16 text-center">
+    <div id="loading-mask" x-show="isPolling" class="flex items-center justify-center py-4">
+        <svg class="w-10 h-10 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"/>
+        </svg>
+    </div>
+
+    <div id="mollie-order-status" x-show="isStatusVisible" x-text="statusMessage"></div>
+
+    <div id="mollie-order-error" x-show="hasError" x-text="errorMessage" style="display: none;"></div>
+
+    <div id="mollie-retry-order" x-show="canRetry" style="display: none;" class="py-4">
+        <button type="button" class="btn btn-primary" @click="retry">
+            <?= $escaper->escapeHtml(__('Retry')); ?>
+        </button>
+    </div>
+</div>
+
+<script>
+    function molliePointOfSaleWait() {
+        return {
+            statusUrl: '<?= $escaper->escapeJs($block->getData('status_url')); ?>',
+            resetUrl: '<?= $escaper->escapeJs($block->getData('reset_url')); ?>',
+            retryUrl: '<?= $escaper->escapeJs($block->getData('retry_url')); ?>',
+            successUrl: '<?= $escaper->escapeJs($block->getUrl('checkout/onepage/success')); ?>',
+            statusTemplate: '<?= $escaper->escapeJs(__('Current Status: %1')); ?>',
+            statusMessage: '<?= $escaper->escapeJs(__('Current Status: Loading...')); ?>',
+            errorMessage: '<?= $escaper->escapeJs(__('Something went wrong while fetching order. Retrying...')); ?>',
+            isPolling: true,
+            hasError: false,
+            canRetry: false,
+            waitTime: 100,
+
+            get isStatusVisible() {
+                return !this.hasError;
+            },
+
+            init() {
+                this.checkOrderStatus();
+            },
+
+            scheduleNextCheck() {
+                if (this.waitTime < 1000) {
+                    this.waitTime += 100;
+                }
+
+                setTimeout(() => this.checkOrderStatus(), this.waitTime);
+            },
+
+            async checkOrderStatus() {
+                const status = await this.fetchStatus();
+                if (status === null) {
+                    this.scheduleNextCheck();
+                    return;
+                }
+
+                this.hasError = false;
+
+                if (status === 'processing') {
+                    this.redirectTo(this.successUrl);
+                    return;
+                }
+
+                this.statusMessage = this.statusTemplate.replace('%1', status);
+
+                if (status === 'canceled') {
+                    this.isPolling = false;
+                    this.canRetry = true;
+                    return;
+                }
+
+                this.scheduleNextCheck();
+            },
+
+            async fetchStatus() {
+                try {
+                    const response = await this.post(this.statusUrl);
+                    if (!response.ok) {
+                        this.hasError = response.status !== 404 && response.status !== 400;
+
+                        return null;
+                    }
+
+                    return (await response.json())[0].status;
+                } catch (exception) {
+                    this.hasError = true;
+
+                    return null;
+                }
+            },
+
+            async retry() {
+                this.canRetry = false;
+                this.isPolling = true;
+
+                await this.post(this.resetUrl);
+                this.redirectTo(this.retryUrl);
+            },
+
+            post(url) {
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                });
+            },
+
+            redirectTo(url) {
+                this.isPolling = false;
+                window.location.href = url;
+            },
+        }
+    }
+
+    window.addEventListener(
+        'alpine:init',
+        () => Alpine.data('molliePointOfSaleWait', molliePointOfSaleWait),
+        {once: true}
+    )
+</script>
+<?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>
