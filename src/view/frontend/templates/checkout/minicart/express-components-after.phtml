@@ -83,7 +83,7 @@ use Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents;
 
             mountComponent(token) {
                 const checkout = Mollie.Checkout(token);
-                const component = checkout.create('express-checkout', {
+                const component = checkout.create('express-component', {
                     paymentMethods: {
                         idealcheckout: 'always',
                         applepay: 'never',
