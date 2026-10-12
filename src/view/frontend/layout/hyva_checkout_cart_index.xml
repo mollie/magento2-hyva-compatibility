@@ -25,13 +25,7 @@
             <block template="Mollie_HyvaCompatibility::checkout/cart/express-components-after.phtml"
                    name="mollie.express.components.cart.after"
                    ifconfig="payment/mollie_methods_expresscomponents/active"
-            >
-                <arguments>
-                    <argument name="magewire" xsi:type="object">
-                        Mollie\HyvaCompatibility\Magewire\Cart\ExpressComponents
-                    </argument>
-                </arguments>
-            </block>
+            />
         </referenceContainer>
 
         <referenceBlock name="content">

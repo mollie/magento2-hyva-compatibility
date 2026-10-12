@@ -7,13 +7,10 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
+        <!-- Its constructor creates a second page result, which drops the Hyvä head scripts on this page. -->
+        <referenceBlock name="category.product.type.details.renderers.configurable" remove="true"/>
+
         <referenceBlock name="mollie.express.wait"
-                        template="Mollie_HyvaCompatibility::checkout/express/wait.phtml">
-            <arguments>
-                <argument name="magewire" xsi:type="object">
-                    Mollie\HyvaCompatibility\Magewire\Express\WaitPage
-                </argument>
-            </arguments>
-        </referenceBlock>
+                        template="Mollie_HyvaCompatibility::checkout/express/wait.phtml"/>
     </body>
 </page>

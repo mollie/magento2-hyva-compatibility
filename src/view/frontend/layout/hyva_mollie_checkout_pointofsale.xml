@@ -9,4 +9,8 @@
         <!-- Luma styling for the wait page; the Hyvä template is styled with Tailwind instead. -->
         <remove src="Mollie_Payment::css/styles.css"/>
     </head>
+    <body>
+        <!-- Its constructor creates a second page result, which drops the Hyvä head scripts on this page. -->
+        <referenceBlock name="category.product.type.details.renderers.configurable" remove="true"/>
+    </body>
 </page>
