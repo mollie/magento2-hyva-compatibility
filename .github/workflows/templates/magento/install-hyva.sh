@@ -55,10 +55,11 @@ fi
 magerun2 config:store:set design/theme/theme_id "$csp_theme_id" --scope=default --scope-id=0
 magerun2 config:store:set design/theme/theme_id "$csp_theme_id" --scope=stores --scope-id=1
 
-# Enable CSP
-magerun2 config:store:set system/default/csp/policies/storefront/scripts/inline 0
-magerun2 config:store:set system/default/csp/policies/storefront/scripts/eval 0
-magerun2 config:store:set system/default/csp/mode/storefront/report_only 0
+# Enforce CSP and block eval, so Hyvä loads the CSP build of Alpine. Inline scripts stay allowed:
+# a full page cache hit serves the CSP header without the hashes of the inline scripts, so blocking
+# them breaks every cached page.
+magerun2 config:store:set csp/policies/storefront/scripts/eval 0
+magerun2 config:store:set csp/mode/storefront/report_only 0
 
 bin/magento hyva:config:generate
 
