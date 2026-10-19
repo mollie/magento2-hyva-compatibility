@@ -37,9 +37,9 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 const browserStorage = hyva.getBrowserStorage();
                 if (browserStorage) {
                     const cacheStorage = browserStorage.getItem('mage-cache-storage');
-                    const cart = JSON.parse(cacheStorage).cart;
+                    const cart = JSON.parse(cacheStorage)?.cart;
 
-                    this.totalAmount = cart.subtotalAmount;
+                    this.totalAmount = cart?.subtotalAmount ?? 0;
                 }
 
                 window.addEventListener('private-content-loaded', event => {
