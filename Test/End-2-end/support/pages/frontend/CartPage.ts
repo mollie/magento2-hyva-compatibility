@@ -25,5 +25,6 @@ export default class CartPage {
 
   async assertApplePayButtonIsInMiniCart(page: Page) {
     await expect(page.locator('#cart-drawer #mollie_applepay_minicart')).toBeVisible();
+    await expect(page.locator('#cart-drawer .mollie-applepay-minicart')).toHaveCount(1);
   }
 }

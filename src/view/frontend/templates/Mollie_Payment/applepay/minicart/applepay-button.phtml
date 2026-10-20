@@ -5,10 +5,22 @@
  */
 
  use Magento\Framework\Escaper;
+ use Mollie\HyvaCompatibility\ViewModel\ApplePayMinicartButton;
  use Mollie\Payment\Block\Applepay\Shortcut\Button;
 
  /** @var Escaper $escaper */
  /** @var Button $block */
+
+ /** @var ApplePayMinicartButton|null $viewModel */
+ $viewModel = $block->getData('view_model');
+
+ // The cart drawer renders the minicart section data through x-html-safe, which strips the Alpine
+ // attributes from this button. The drawer gets its own copy through mollie.applepay.minicart.button,
+ // so the shortcut that Mollie_Payment adds to the minicart section data renders nothing.
+ $isMinicartSectionData = $viewModel === null && !$block->getData('is_cart');
+ if ($isMinicartSectionData || ($viewModel !== null && !$viewModel->isEnabled())) {
+     return;
+ }
 ?>
 <div id="mollie_applepay_minicart"
      class="mollie-applepay-minicart"

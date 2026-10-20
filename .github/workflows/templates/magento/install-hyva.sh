@@ -30,9 +30,7 @@ composer config repositories.hyva-themes/magento2-base-layout-reset git git@gitl
 # Replace it so Composer skips installing it; the compatibility module is tested directly.
 jq '.replace["hyva-themes/magento2-mollie-theme-bundle"] = "*"' composer.json > composer.tmp.json && mv composer.tmp.json composer.json
 
-# magento2-default-theme-csp 1.5.3 renders the minicart extra actions through x-html-safe, which strips
-# the id, x-data and @click from the Apple Pay minicart button. Stay on 1.5.2 until that is fixed.
-composer require hyva-themes/magento2-default-theme-csp:1.5.2 hyva-themes/magento2-theme-module:^1.4
+composer require hyva-themes/magento2-default-theme-csp:^1.5 hyva-themes/magento2-theme-module:^1.4
 
 bin/magento setup:upgrade --keep-generated
 
