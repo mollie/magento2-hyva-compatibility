@@ -10,7 +10,8 @@
         <remove src="Mollie_Payment::css/styles.css"/>
     </head>
     <body>
-        <!-- Its constructor creates a second page result, which drops the Hyvä head scripts on this page. -->
+        <!-- Hyvä loads this block on every page. Its CurrentCustomer dependency creates App\View, whose constructor
+             creates a second page result while this page builds its layout, which drops the Hyvä head scripts. -->
         <referenceBlock name="category.product.type.details.renderers.configurable" remove="true"/>
     </body>
 </page>
