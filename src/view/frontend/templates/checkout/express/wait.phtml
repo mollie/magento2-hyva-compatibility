@@ -8,68 +8,116 @@ declare(strict_types=1);
 
 use Magento\Framework\Escaper;
 use Magento\Framework\View\Element\Template;
-use Mollie\HyvaCompatibility\Magewire\Express\WaitPage;
 
 /** @var Escaper $escaper */
-/** @var WaitPage $magewire */
 /** @var Template $block */
 ?>
 
-<div x-data="mollieExpressWait()">
-    <div x-show="status !== 'error'" id="mollie-order-status">
-        <span x-text="currentStatus"></span>
+<div x-data="mollieExpressWait" class="container mx-auto py-16 text-center">
+    <div id="loading-mask" x-show="isPolling" class="flex items-center justify-center py-4">
+        <svg class="w-10 h-10 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"/>
+        </svg>
     </div>
-    <div x-show="status === 'error'" id="mollie-order-error" style="display: none;">
-        <span x-text="currentStatus"></span>
+    <div x-show="isStatusVisible" id="mollie-order-status">
+        <span x-text="statusMessage"></span>
+    </div>
+    <div x-show="hasError" id="mollie-order-error" style="display: none;">
+        <span x-text="errorMessage"></span>
     </div>
 </div>
 
 <script>
     function mollieExpressWait() {
         return {
-            status: '<?= $escaper->escapeJs($magewire->status) ?>',
-            currentStatus: '<?= $escaper->escapeJs($magewire->currentStatus) ?>',
-            redirectToCartUrl: '<?= $escaper->escapeJs($magewire->redirectToCartUrl) ?>',
-            token: '<?= $escaper->escapeJs($block->getRequest()->getParam('paymentToken')) ?>',
+            statusUrl: '<?= $escaper->escapeJs($block->getData('status_url')) ?>',
+            redirectUrl: '<?= $escaper->escapeJs($block->getData('redirect_url')) ?>',
+            redirectToCartUrl: '<?= $escaper->escapeJs($block->getData('redirect_to_cart_url')) ?>',
+            statusTemplate: '<?= $escaper->escapeJs(__('Current Status: %1')) ?>',
+            statusMessage: '<?= $escaper->escapeJs(__('Current Status: Loading...')) ?>',
+            errorMessage: '<?= $escaper->escapeJs(__('Something went wrong while fetching order. Retrying...')) ?>',
+            isPolling: true,
+            hasError: false,
             waitTime: 100,
+
+            get isStatusVisible() {
+                return !this.hasError;
+            },
 
             init() {
                 window.dispatchEvent(new CustomEvent('reload-customer-section-data'));
 
-                this.wire().token = this.token;
-
-                // Hard 60-second fallback: redirect to cart if order never appears
                 setTimeout(() => {
-                    window.location = this.redirectToCartUrl;
-                }, 60000);
+                    window.location.href = this.redirectToCartUrl;
+                }, 60 * 1000);
 
-                this.scheduleNextPoll();
+                this.scheduleNextCheck();
             },
 
-            scheduleNextPoll() {
+            scheduleNextCheck() {
                 if (this.waitTime < 1000) {
                     this.waitTime += 100;
                 }
-                setTimeout(() => this.poll(), this.waitTime);
+
+                setTimeout(() => this.checkOrderStatus(), this.waitTime);
             },
 
-            async poll() {
-                await this.$wire.call('pollStatus');
-                this.status = this.$wire.get('status');
-                this.currentStatus = this.$wire.get('currentStatus');
+            async checkOrderStatus() {
+                const status = await this.fetchStatus();
+                if (status === null) {
+                    this.scheduleNextCheck();
+                    return;
+                }
 
-                // 'processing' → Magewire triggers server-side redirect automatically
-                // 'canceled' → stop polling, show final status
-                // anything else → keep polling with backoff
-                if (this.status !== 'processing' && this.status !== 'canceled') {
-                    this.scheduleNextPoll();
+                this.hasError = false;
+                this.statusMessage = this.statusTemplate.replace('%1', this.capitalize(status));
+
+                if (status === 'processing') {
+                    window.location.href = this.redirectUrl;
+                    return;
+                }
+
+                if (status === 'canceled') {
+                    this.isPolling = false;
+                    return;
+                }
+
+                this.scheduleNextCheck();
+            },
+
+            async fetchStatus() {
+                try {
+                    const response = await fetch(this.statusUrl, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                    });
+
+                    if (!response.ok) {
+                        this.hasError = response.status !== 404 && response.status !== 400;
+
+                        return null;
+                    }
+
+                    return (await response.json())[0].status;
+                } catch (exception) {
+                    this.hasError = true;
+
+                    return null;
                 }
             },
 
-            wire() {
-                return Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
-            }
+            capitalize(value) {
+                return value.charAt(0).toUpperCase() + value.slice(1);
+            },
         }
     }
+
+    window.addEventListener(
+        'alpine:init',
+        () => Alpine.data('mollieExpressWait', mollieExpressWait),
+        {once: true}
+    )
 </script>
 <?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>

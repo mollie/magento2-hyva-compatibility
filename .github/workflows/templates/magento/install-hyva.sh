@@ -30,13 +30,28 @@ composer config repositories.hyva-themes/magento2-base-layout-reset git git@gitl
 # Replace it so Composer skips installing it; the compatibility module is tested directly.
 jq '.replace["hyva-themes/magento2-mollie-theme-bundle"] = "*"' composer.json > composer.tmp.json && mv composer.tmp.json composer.json
 
-composer require hyva-themes/magento2-default-theme-csp hyva-themes/magento2-theme-module:^1.4
+# magento2-default-theme-csp 1.5.3 renders the minicart extra actions through x-html-safe, which strips
+# the id, x-data and @click from the Apple Pay minicart button. Stay on 1.5.2 until that is fixed.
+composer require hyva-themes/magento2-default-theme-csp:1.5.2 hyva-themes/magento2-theme-module:^1.4
 
 bin/magento setup:upgrade --keep-generated
 
 # Activate the Hyvä Default CSP theme. The numeric theme_id shifts between Hyvä
 # releases, so resolve it by code instead of hardcoding a magic number.
-csp_theme_id=$(magerun2 --no-ansi db:query "SELECT theme_id FROM theme WHERE area = 'frontend' AND code = 'Hyva/default-csp' LIMIT 1" 2>/dev/null | grep -xE '[0-9]+' | head -n1)
+# Fail here when the theme cannot be found: an empty theme_id silently falls back to
+# Luma, which only surfaces later as confusing e2e failures.
+find_theme_id() {
+    magerun2 --no-ansi db:query "SELECT theme_id FROM theme WHERE area = 'frontend' AND code LIKE '$1' ORDER BY theme_id LIMIT 1" | grep -xE '[0-9]+' | head -n1 || true
+}
+csp_theme_id=$(find_theme_id 'Hyva/default-csp')
+if [ -z "$csp_theme_id" ]; then
+    csp_theme_id=$(find_theme_id 'Hyva/%csp%')
+fi
+if [ -z "$csp_theme_id" ]; then
+    echo "The Hyvä Default CSP theme is not registered. Frontend themes:"
+    magerun2 --no-ansi db:query "SELECT theme_id, code, theme_path FROM theme WHERE area = 'frontend'"
+    exit 1
+fi
 magerun2 config:store:set design/theme/theme_id "$csp_theme_id" --scope=default --scope-id=0
 magerun2 config:store:set design/theme/theme_id "$csp_theme_id" --scope=stores --scope-id=1
 

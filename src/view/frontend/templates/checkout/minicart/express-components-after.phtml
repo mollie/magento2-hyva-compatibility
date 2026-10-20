@@ -8,11 +8,9 @@ declare(strict_types=1);
 
 /** @var Escaper $escaper */
 /** @var Template $block */
-/** @var ExpressComponents $magewire */
 
 use Magento\Framework\Escaper;
 use Magento\Framework\View\Element\Template;
-use Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents;
 
 ?>
 
@@ -21,6 +19,7 @@ use Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents;
         return {
             drawerOpen: false,
             sessionCreated: false,
+            createSessionUrl: '<?= $escaper->escapeJs($block->getUrl('mollie/express/createSession')) ?>',
 
             init() {
                 window.addEventListener('toggle-cart', (event) => {
@@ -44,8 +43,7 @@ use Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents;
                 }
 
                 try {
-                    await this.wire().createSession();
-                    const token = this.wire().clientAccessToken;
+                    const token = await this.fetchClientAccessToken();
 
                     if (!token) {
                         return;
@@ -93,9 +91,18 @@ use Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents;
                 component.mount(document.getElementById('express-component-minicart'));
             },
 
-            wire() {
-                return Magewire.find('<?= $escaper->escapeJs($block->getNameInLayout()) ?>');
-            }
+            async fetchClientAccessToken() {
+                const response = await fetch(`${this.createSessionUrl}?form_key=${hyva.getFormKey()}`, {
+                    method: 'POST',
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Creating the express session failed with HTTP ${response.status}`);
+                }
+
+                return (await response.json()).clientAccessToken;
+            },
         }
     }
 
