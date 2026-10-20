@@ -21,6 +21,9 @@ bin/magento config:set payment/mollie_methods_applepay/integration_type direct
 bin/magento config:set payment/mollie_methods_applepay/enable_buy_now_button 1
 bin/magento config:set payment/mollie_methods_applepay/enable_minicart_button 1
 
+# Enable Express Components (required for the cart and minicart express component tests)
+bin/magento config:set payment/mollie_methods_expresscomponents/active 1
+
 # Enable Point of Sale (required for the point-of-sale wait page test). allowed_customer_groups has
 # no default in config.xml, and PaymentMethodManagementPlugin filters the method out for every group
 # until it is set, so the guest group (0) has to be allowed explicitly. The test discovers the
