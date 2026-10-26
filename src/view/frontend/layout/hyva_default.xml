@@ -14,6 +14,15 @@
         </referenceContainer>
 
         <referenceContainer name="extra_actions">
+            <block class="Mollie\Payment\Block\Applepay\Shortcut\Button"
+                   name="mollie.applepay.minicart.button"
+                   before="-"
+            >
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Mollie\HyvaCompatibility\ViewModel\ApplePayMinicartButton</argument>
+                </arguments>
+            </block>
+
             <block template="Mollie_HyvaCompatibility::checkout/minicart/express-components.phtml"
                    name="mollie.express.components.minicart"
                    ifconfig="payment/mollie_methods_expresscomponents/active"
@@ -24,13 +33,7 @@
             <block template="Mollie_HyvaCompatibility::checkout/minicart/express-components-after.phtml"
                    name="mollie.express.components.minicart.after"
                    ifconfig="payment/mollie_methods_expresscomponents/active"
-            >
-                <arguments>
-                    <argument name="magewire" xsi:type="object">
-                        Mollie\HyvaCompatibility\Magewire\Minicart\ExpressComponents
-                    </argument>
-                </arguments>
-            </block>
+            />
         </referenceContainer>
     </body>
 </page>

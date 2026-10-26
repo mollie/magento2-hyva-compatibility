@@ -69,11 +69,25 @@ jobs:
         run: |
           docker exec magento-project-community-edition /bin/bash /data/install-hyva.sh
 
+      # Temporary: the Express Components tests need the express webhook fix in mollie/magento2, which is
+      # not released yet. Use its branch while it exists on Packagist, otherwise fall back to dev-master.
+      # The branch is aliased to a 3.x version so it satisfies this module's mollie/magento2 constraint. The
+      # alias contains spaces, so composer is called directly: install-composer-package splits its arguments.
+      - name: Select the mollie/magento2 version
+        run: |
+          CORE_VERSION=dev-bugfix/express-webhook-custom-url
+          if ! curl -sf https://repo.packagist.org/p2/mollie/magento2~dev.json | \
+            jq -e --arg version "$CORE_VERSION" '.packages["mollie/magento2"][] | select(.version == $version)' > /dev/null; then
+            CORE_VERSION=dev-master
+          fi
+          echo "Using mollie/magento2:$CORE_VERSION"
+          echo "core_version=$CORE_VERSION" >> $GITHUB_ENV
+
       - name: Upload the code into the docker container
         run: |
           sed -i '/version/d' ./composer.json && \
           docker cp $(pwd) magento-project-community-edition:/data/extensions/ && \
-          docker exec magento-project-community-edition ./install-composer-package mollie/magento2:@dev mollie/magento2-hyva-compatibility:@dev
+          docker exec magento-project-community-edition composer require "mollie/magento2:${{ env.core_version }} as 3.99.0" mollie/magento2-hyva-compatibility:@dev --no-plugins --no-interaction
 
       - name: Activate the extension
         run: |
