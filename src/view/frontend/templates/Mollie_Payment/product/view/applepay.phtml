@@ -106,6 +106,15 @@ $product = $block->getProduct();
                     return payload.total;
                 }
 
+                const rejectShippingContact = (message) => {
+                    session.completeShippingContactSelection({
+                        newTotal: request.total,
+                        newLineItems: [],
+                        newShippingMethods: [],
+                        errors: [new ApplePayError('shippingContactInvalid', 'postalAddress', message)]
+                    });
+                };
+
                 const handleAjaxError = (message) => {
                     this.isLoading = false;
                     if (session) session.abort();
@@ -153,18 +162,18 @@ $product = $block->getProduct();
                 };
 
                 session.onshippingcontactselected = (event) => {
-                    countryCode = event.shippingContact.countryCode;
-                    postalCode = event.shippingContact.postalCode;
+                    countryCode = event.shippingContact.countryCode ?? '';
+                    postalCode = event.shippingContact.postalCode ?? '';
 
-                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}`, {
+                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}&supportsInvalidShippingContact=1`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
                         },
                         body: objectToFormData({
                             cartId: cartId,
-                            countryCode: event.shippingContact.countryCode,
-                            postalCode: event.shippingContact.postalCode
+                            countryCode: countryCode,
+                            postalCode: postalCode
                         })
                     })
                         .then(async (response) => {
@@ -179,6 +188,11 @@ $product = $block->getProduct();
                             return response.json();
                         })
                         .then(result => {
+                            if (result.invalid_shipping_contact) {
+                                rejectShippingContact(result.message);
+                                return;
+                            }
+
                             shippingMethods = result.shipping_methods;
                             selectedShippingMethod = result.shipping_methods[0];
                             quoteTotals = result.totals;
@@ -198,7 +212,7 @@ $product = $block->getProduct();
                 session.onshippingmethodselected = (event) => {
                     selectedShippingMethod = event.shippingMethod;
 
-                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}`, {
+                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}&supportsInvalidShippingContact=1`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -222,6 +236,11 @@ $product = $block->getProduct();
                             return response.json();
                         })
                         .then(result => {
+                            if (result.invalid_shipping_contact) {
+                                handleAjaxError(result.message);
+                                return;
+                            }
+
                             quoteTotals = result.totals;
 
                             session.completeShippingMethodSelection(

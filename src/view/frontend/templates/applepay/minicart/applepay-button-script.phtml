@@ -108,6 +108,15 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                     return payload.lineItems;
                 };
 
+                const rejectShippingContact = (message) => {
+                    session.completeShippingContactSelection({
+                        newTotal: request.total,
+                        newLineItems: [],
+                        newShippingMethods: [],
+                        errors: [new ApplePayError('shippingContactInvalid', 'postalAddress', message)]
+                    });
+                };
+
                 const handleAjaxError = (message) => {
                     this.isLoading(false);
                     session.abort();
@@ -125,16 +134,16 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 };
 
                 session.onshippingcontactselected = (event) => {
-                    countryCode = event.shippingContact.countryCode;
-                    postalCode = event.shippingContact.postalCode;
+                    countryCode = event.shippingContact.countryCode ?? '';
+                    postalCode = event.shippingContact.postalCode ?? '';
 
-                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}`, {
+                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}&supportsInvalidShippingContact=1`, {
                         method: 'POST',
                         headers: {
                             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         },
-                        body: 'countryCode=' + event.shippingContact.countryCode +
-                            '&postalCode=' + event.shippingContact.postalCode
+                        body: 'countryCode=' + encodeURIComponent(countryCode) +
+                            '&postalCode=' + encodeURIComponent(postalCode)
                     })
                         .then(async (response) => {
                             if (!response.ok) {
@@ -148,6 +157,11 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                             return response.json();
                         })
                         .then(result => {
+                            if (result.invalid_shipping_contact) {
+                                rejectShippingContact(result.message);
+                                return;
+                            }
+
                             shippingMethods = result.shipping_methods;
                             selectedShippingMethod = result.shipping_methods[0];
                             quoteTotals = result.totals;
@@ -165,7 +179,7 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                 session.onshippingmethodselected = (event) => {
                     selectedShippingMethod = event.shippingMethod;
 
-                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}`, {
+                    fetch(`${BASE_URL}mollie/applePay/shippingMethods?form_key=${hyva.getFormKey()}&supportsInvalidShippingContact=1`, {
                         method: 'POST',
                         headers: {
                             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -188,6 +202,11 @@ use Mollie\Payment\Block\Applepay\Shortcut\Button;
                             return response.json();
                         })
                         .then(result => {
+                            if (result.invalid_shipping_contact) {
+                                handleAjaxError(result.message);
+                                return;
+                            }
+
                             quoteTotals = result.totals;
 
                             session.completeShippingMethodSelection(
