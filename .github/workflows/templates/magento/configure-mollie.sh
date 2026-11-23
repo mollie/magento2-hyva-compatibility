@@ -23,6 +23,8 @@ bin/magento config:set payment/mollie_methods_applepay/enable_minicart_button 1
 
 # Enable Express Components (required for the cart and minicart express component tests)
 bin/magento config:set payment/mollie_methods_expresscomponents/active 1
+# The guest sessions in the cart and minicart, and the product page placement, need the shipping options beta
+bin/magento config:set payment/mollie_methods_expresscomponents/beta_shipping_options 1
 
 # Enable Point of Sale (required for the point-of-sale wait page test). allowed_customer_groups has
 # no default in config.xml, and PaymentMethodManagementPlugin filters the method out for every group

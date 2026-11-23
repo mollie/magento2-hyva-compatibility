@@ -12,6 +12,19 @@
             <block class="Mollie\HyvaCompatibility\Block\Product\View\ApplePay" name="mollie.applepay.button" template="Mollie_Payment::product/view/applepay.phtml">
                 <block name="mollie-loader" template="Hyva_Theme::ui/loading.phtml"/>
             </block>
+
+            <block template="Mollie_HyvaCompatibility::product/view/express-components.phtml"
+                   name="mollie.express.components.product.hyva"
+                   ifconfig="payment/mollie_methods_expresscomponents/active"
+            >
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Mollie\HyvaCompatibility\ViewModel\ExpressComponents</argument>
+                </arguments>
+            </block>
         </referenceBlock>
+
+        <!-- Added by the mollie_express_components_beta_product handle of Mollie_Payment, they need RequireJS -->
+        <referenceBlock name="mollie.express.components.product" remove="true"/>
+        <referenceBlock name="mollie.express.components.product.additional" remove="true"/>
     </body>
 </page>

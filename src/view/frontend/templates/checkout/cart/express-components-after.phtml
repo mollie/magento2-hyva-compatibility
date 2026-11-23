@@ -17,6 +17,9 @@ use Mollie\Payment\Controller\Express\CreateSession;
 
 <script>
     function mollieExpressCart() {
+        // Without the beta Mollie cannot collect the email of a guest, and the server answers with this status.
+        const STATUS_CUSTOMER_DETAILS_REQUIRED = 422;
+
         return {
             drawerOpen: false,
             sessionCreated: false,
@@ -87,6 +90,10 @@ use Mollie\Payment\Controller\Express\CreateSession;
                     method: 'POST',
                     headers: {'X-Requested-With': 'XMLHttpRequest'},
                 });
+
+                if (response.status === STATUS_CUSTOMER_DETAILS_REQUIRED) {
+                    return null;
+                }
 
                 if (!response.ok) {
                     throw new Error(`Creating the express session failed with HTTP ${response.status}`);
