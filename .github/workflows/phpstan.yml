@@ -47,8 +47,22 @@ jobs:
       - name: Upload our code into the docker container
         run: docker cp $(pwd) magento-project-community-edition:/data/extensions/
 
+      # Temporary: the Express Components placement settings need mollie/magento2 3.4.0, which is not
+      # released yet. Use its release branch while it exists on Packagist, otherwise fall back to dev-master.
+      # The branch is aliased to a 3.x version so it satisfies this module's mollie/magento2 constraint. The
+      # alias contains spaces, so composer is called directly: install-composer-package splits its arguments.
+      - name: Select the mollie/magento2 version
+        run: |
+          CORE_VERSION=dev-release-week-46
+          if ! curl -sf https://repo.packagist.org/p2/mollie/magento2~dev.json | \
+            jq -e --arg version "$CORE_VERSION" '.packages["mollie/magento2"][] | select(.version == $version)' > /dev/null; then
+            CORE_VERSION=dev-master
+          fi
+          echo "Using mollie/magento2:$CORE_VERSION"
+          echo "core_version=$CORE_VERSION" >> $GITHUB_ENV
+
       - name: Install the extensions in Magento
-        run: docker exec magento-project-community-edition ./install-composer-package mollie/magento2:@dev mollie/magento2-hyva-compatibility:@dev
+        run: docker exec magento-project-community-edition composer require "mollie/magento2:${{ env.core_version }} as 3.99.0" mollie/magento2-hyva-compatibility:@dev --no-plugins --no-interaction
 
       - name: Activate the extensions
         run: docker exec magento-project-community-edition ./retry "php bin/magento module:enable Mollie_Payment Mollie_HyvaCompatibility && php bin/magento setup:di:compile && php bin/magento setup:upgrade --keep-generated"

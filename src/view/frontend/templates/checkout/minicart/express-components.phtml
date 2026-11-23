@@ -3,6 +3,19 @@
  * Copyright Magmodules.eu. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+declare(strict_types=1);
+
+use Magento\Framework\View\Element\Template;
+use Mollie\HyvaCompatibility\ViewModel\ExpressComponents;
+
+/** @var Template $block */
+/** @var ExpressComponents $viewModel */
+$viewModel = $block->getData('view_model');
+
+if (!$viewModel->shouldShowInMinicart()) {
+    return;
+}
 ?>
 
 <div x-data="mollieExpressMinicart">

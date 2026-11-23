@@ -1,0 +1,167 @@
+<?php
+/*
+ * Copyright Magmodules.eu. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+declare(strict_types=1);
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+/** @var ExpressComponents $viewModel */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Mollie\HyvaCompatibility\ViewModel\ExpressComponents;
+use Mollie\Payment\Controller\Express\CreateSession;
+
+$viewModel = $block->getData('view_model');
+
+if (!$viewModel->shouldShowOnProductPage()) {
+    return;
+}
+?>
+
+<div x-data="mollieExpressProduct" class="mollie-express-product w-full">
+    <div id="express-component-product"></div>
+</div>
+
+<script>
+    /*
+     * The product page has no cart. Every session is created from the add to cart form, so it holds exactly the
+     * product, quantity and options the customer selected. A change in the form starts a new session.
+     */
+    function mollieExpressProduct() {
+        const CHANGE_DELAY_MS = 500;
+        const FORM_ID = 'product_addtocart_form';
+        const MOUNT_ID = 'express-component-product';
+        const STATUS_PRODUCT_NOT_AVAILABLE = 422;
+
+        return {
+            requestedData: null,
+            requestNumber: 0,
+            changeTimer: null,
+            createSessionUrl: '<?= $escaper->escapeJs(
+                $block->getUrl('mollie/express/createSession', ['type' => CreateSession::TYPE_PRODUCT])
+            ) ?>',
+
+            init() {
+                if (!this.getForm()) {
+                    return;
+                }
+
+                // Hyvä places some inputs outside the form with a form attribute, so their events skip the form.
+                ['change', 'input'].forEach((type) => {
+                    document.addEventListener(type, (event) => this.onFormChange(event));
+                });
+
+                this.createSession();
+            },
+
+            getForm() {
+                return document.getElementById(FORM_ID);
+            },
+
+            onFormChange(event) {
+                if (event.target.form !== this.getForm()) {
+                    return;
+                }
+
+                clearTimeout(this.changeTimer);
+                this.changeTimer = setTimeout(() => this.createSession(), CHANGE_DELAY_MS);
+            },
+
+            async createSession() {
+                const data = new URLSearchParams(new FormData(this.getForm())).toString();
+                if (data === this.requestedData) {
+                    return;
+                }
+
+                this.requestedData = data;
+                const currentRequest = ++this.requestNumber;
+
+                try {
+                    const token = await this.fetchClientAccessToken(data);
+                    if (currentRequest !== this.requestNumber) {
+                        return;
+                    }
+
+                    this.clear();
+                    if (!token) {
+                        return;
+                    }
+
+                    await this.loadMollieJs();
+                    this.mountComponent(token);
+                } catch (error) {
+                    console.error('Mollie Express Components error:', error);
+                }
+            },
+
+            clear() {
+                const mountDiv = document.getElementById(MOUNT_ID);
+                if (mountDiv) {
+                    mountDiv.innerHTML = '';
+                }
+            },
+
+            loadMollieJs() {
+                return new Promise((resolve) => {
+                    if (typeof Mollie !== 'undefined') {
+                        resolve();
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = 'https://js.mollie.com/v2/mollie.js';
+                    script.onload = resolve;
+                    document.head.appendChild(script);
+                });
+            },
+
+            mountComponent(token) {
+                const checkout = Mollie.Checkout(token);
+                const component = checkout.create('express-component', {
+                    paymentMethods: {
+                        applepay: 'never',
+                        googlepay: 'never',
+                    },
+                    buttons: {
+                        paypal: {
+                            visibility: 'hidden',
+                        },
+                    },
+                });
+                component.mount(document.getElementById(MOUNT_ID));
+            },
+
+            /*
+             * A product without all its required options cannot be bought yet. The server answers with a 422,
+             * and the buttons stay hidden until the next change. Any other error is unexpected and gets logged.
+             */
+            async fetchClientAccessToken(data) {
+                const response = await fetch(this.createSessionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: data,
+                });
+
+                if (response.status === STATUS_PRODUCT_NOT_AVAILABLE) {
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Creating the express session failed with HTTP ${response.status}`);
+                }
+
+                return (await response.json()).clientAccessToken;
+            },
+        }
+    }
+
+    window.addEventListener('alpine:init', () => Alpine.data('mollieExpressProduct', mollieExpressProduct), {once: true});
+</script>
+<?php isset($hyvaCsp) && $hyvaCsp->registerInlineScript() ?>
