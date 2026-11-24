@@ -69,13 +69,13 @@ jobs:
         run: |
           docker exec magento-project-community-edition /bin/bash /data/install-hyva.sh
 
-      # Temporary: the Express Components tests need the express webhook fix in mollie/magento2, which is
-      # not released yet. Use its branch while it exists on Packagist, otherwise fall back to dev-master.
+      # Temporary: the Express Components placement settings need mollie/magento2 3.4.0, which is not
+      # released yet. Use its release branch while it exists on Packagist, otherwise fall back to dev-master.
       # The branch is aliased to a 3.x version so it satisfies this module's mollie/magento2 constraint. The
       # alias contains spaces, so composer is called directly: install-composer-package splits its arguments.
       - name: Select the mollie/magento2 version
         run: |
-          CORE_VERSION=dev-bugfix/express-webhook-custom-url
+          CORE_VERSION=dev-release-week-46
           if ! curl -sf https://repo.packagist.org/p2/mollie/magento2~dev.json | \
             jq -e --arg version "$CORE_VERSION" '.packages["mollie/magento2"][] | select(.version == $version)' > /dev/null; then
             CORE_VERSION=dev-master
@@ -138,7 +138,16 @@ jobs:
         run: |
           cd Test/End-2-end
           npm install
-          npx playwright install --with-deps
+          # The apt mirrors sometimes stall, so give each attempt 5 minutes and retry.
+          for attempt in 1 2 3; do
+            if timeout --kill-after=30s 5m npx playwright install --with-deps chromium; then
+              exit 0
+            fi
+            echo "::warning::Playwright install attempt $attempt failed or timed out"
+            sudo pkill -9 -x 'apt-get|dpkg' || true
+            sudo dpkg --configure -a || true
+          done
+          exit 1
 
       - name: Run Playwright tests
         run: |

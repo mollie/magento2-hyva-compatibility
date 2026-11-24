@@ -26,14 +26,22 @@
             <block template="Mollie_HyvaCompatibility::checkout/minicart/express-components.phtml"
                    name="mollie.express.components.minicart"
                    ifconfig="payment/mollie_methods_expresscomponents/active"
-            />
+            >
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Mollie\HyvaCompatibility\ViewModel\ExpressComponents</argument>
+                </arguments>
+            </block>
         </referenceContainer>
 
         <referenceContainer name="header.container">
             <block template="Mollie_HyvaCompatibility::checkout/minicart/express-components-after.phtml"
                    name="mollie.express.components.minicart.after"
                    ifconfig="payment/mollie_methods_expresscomponents/active"
-            />
+            >
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Mollie\HyvaCompatibility\ViewModel\ExpressComponents</argument>
+                </arguments>
+            </block>
         </referenceContainer>
     </body>
 </page>

@@ -27,6 +27,31 @@ export const getAdminToken = async (
   return token;
 };
 
+export const createGuestCartWithProduct = async (
+  baseURL: string,
+  sku: string,
+): Promise<string> => {
+  const context = await request.newContext({ ignoreHTTPSErrors: true });
+  const cartResponse = await context.post(`${restBaseUrl(baseURL)}/rest/V1/guest-carts`);
+
+  if (!cartResponse.ok()) {
+    throw new Error(`Could not create a guest cart (HTTP ${cartResponse.status()}).`);
+  }
+
+  const cartId: string = await cartResponse.json();
+  const itemResponse = await context.post(`${restBaseUrl(baseURL)}/rest/V1/guest-carts/${cartId}/items`, {
+    data: { cartItem: { sku, qty: 1, quote_id: cartId } },
+  });
+
+  if (!itemResponse.ok()) {
+    throw new Error(`Could not add SKU "${sku}" to guest cart (HTTP ${itemResponse.status()}).`);
+  }
+
+  await context.dispose();
+
+  return cartId;
+};
+
 export const getProductIdBySku = async (
   baseURL: string,
   token: string,

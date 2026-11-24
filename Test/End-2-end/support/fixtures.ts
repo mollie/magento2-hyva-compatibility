@@ -4,7 +4,7 @@
  */
 
 import { test as base } from '@playwright/test';
-import { getProductIdBySku } from './magento-rest';
+import { createGuestCartWithProduct, getProductIdBySku } from './magento-rest';
 import { createOrderAwaitingConfirmation, createPointOfSaleOrder, PendingOrder } from './mollie-order-rest';
 
 export type ProductSkus = {
@@ -22,7 +22,11 @@ type MollieOrders = {
   pointOfSaleOrder: PendingOrder | null;
 };
 
-export const test = base.extend<ProductSkus & ResolvedProductIds & MollieOrders>({
+type GuestCarts = {
+  guestCartWithSimpleProduct: string;
+};
+
+export const test = base.extend<ProductSkus & ResolvedProductIds & MollieOrders & GuestCarts>({
   simpleProductSku: ['24-MB05', { option: true }],
   configurableProductSku: ['MH01', { option: true }],
 
@@ -37,6 +41,9 @@ export const test = base.extend<ProductSkus & ResolvedProductIds & MollieOrders>
   },
   pointOfSaleOrder: async ({ baseURL, simpleProductSku }, use) => {
     await use(await createPointOfSaleOrder(baseURL!, simpleProductSku));
+  },
+  guestCartWithSimpleProduct: async ({ baseURL, simpleProductSku }, use) => {
+    await use(await createGuestCartWithProduct(baseURL!, simpleProductSku));
   },
 });
 

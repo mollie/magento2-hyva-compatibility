@@ -8,17 +8,29 @@ declare(strict_types=1);
 
 /** @var Escaper $escaper */
 /** @var Template $block */
+/** @var ExpressComponents $viewModel */
 
 use Magento\Framework\Escaper;
 use Magento\Framework\View\Element\Template;
+use Mollie\HyvaCompatibility\ViewModel\ExpressComponents;
 
+$viewModel = $block->getData('view_model');
+
+if (!$viewModel->shouldShowInMinicart()) {
+    return;
+}
 ?>
 
 <script>
     function mollieExpressMinicart() {
+        const STATUS_CUSTOMER_DETAILS_REQUIRED = 422;
+
         return {
             drawerOpen: false,
             sessionCreated: false,
+            isCreatingSession: false,
+            isCustomer: false,
+            isBetaEnabled: <?= $viewModel->isBetaEnabled() ? 'true' : 'false' ?>,
             createSessionUrl: '<?= $escaper->escapeJs($block->getUrl('mollie/express/createSession')) ?>',
 
             init() {
@@ -27,21 +39,36 @@ use Magento\Framework\View\Element\Template;
                     this.createSession();
                 });
 
-                window.addEventListener('private-content-loaded', () => {
-                    if (!this.drawerOpen || !this.sessionCreated) {
+                window.addEventListener('private-content-loaded', (event) => {
+                    this.isCustomer = Boolean(event.detail.data.customer?.firstname);
+
+                    // The drawer can open before the customer data arrived, so retry when no session was created.
+                    if (!this.drawerOpen || this.isCreatingSession) {
                         return;
                     }
 
-                    this.resetSession();
+                    if (this.sessionCreated) {
+                        this.resetSession();
+                    }
+
                     this.createSession();
                 });
             },
 
+            /*
+             * The minicart has no email of a guest. Only Mollie accounts in the beta can collect it, so without the
+             * beta the session would always be refused.
+             */
+            canPayAsCustomer() {
+                return this.isBetaEnabled || this.isCustomer;
+            },
+
             async createSession() {
-                if (!this.drawerOpen || this.sessionCreated) {
+                if (!this.drawerOpen || this.sessionCreated || this.isCreatingSession || !this.canPayAsCustomer()) {
                     return;
                 }
 
+                this.isCreatingSession = true;
                 try {
                     const token = await this.fetchClientAccessToken();
 
@@ -54,6 +81,8 @@ use Magento\Framework\View\Element\Template;
                     this.mountComponent(token);
                 } catch (error) {
                     console.error('Mollie Express Components error:', error);
+                } finally {
+                    this.isCreatingSession = false;
                 }
             },
 
@@ -96,6 +125,10 @@ use Magento\Framework\View\Element\Template;
                     method: 'POST',
                     headers: {'X-Requested-With': 'XMLHttpRequest'},
                 });
+
+                if (response.status === STATUS_CUSTOMER_DETAILS_REQUIRED) {
+                    return null;
+                }
 
                 if (!response.ok) {
                     throw new Error(`Creating the express session failed with HTTP ${response.status}`);

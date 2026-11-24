@@ -7,6 +7,7 @@ import { Page, Response, expect } from '@playwright/test';
 
 const CART_SESSION_ENDPOINT = /mollie\/express\/createSession\/type\/cart/;
 const MINICART_SESSION_ENDPOINT = /mollie\/express\/createSession\/?(\?|$)/;
+const PRODUCT_SESSION_ENDPOINT = /mollie\/express\/createSession\/type\/product/;
 
 /**
  * Mollie.js mounts the component asynchronously after the session is created, so give it a bit
@@ -30,6 +31,10 @@ export default class ExpressComponentsPage {
     return page.waitForResponse(response => MINICART_SESSION_ENDPOINT.test(response.url()));
   }
 
+  expectProductSession(page: Page): Promise<Response> {
+    return page.waitForResponse(response => PRODUCT_SESSION_ENDPOINT.test(response.url()));
+  }
+
   async assertSessionHasClientAccessToken(response: Response) {
     expect(response.status()).toBe(200);
     expect((await response.json()).clientAccessToken, 'the session must return a client access token').toBeTruthy();
@@ -41,6 +46,10 @@ export default class ExpressComponentsPage {
 
   async assertIsMountedInMinicart(page: Page) {
     await this.assertIsMounted(page, '#cart-drawer #express-component-minicart');
+  }
+
+  async assertIsMountedOnProductPage(page: Page) {
+    await this.assertIsMounted(page, '#express-component-product');
   }
 
   private async assertIsMounted(page: Page, container: string) {
